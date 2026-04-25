@@ -47,6 +47,9 @@ export function ReceiptCapturePage() {
       addEntry(entry);
       navigate(`/receipt/comparison/${entryId}`);
     } catch (err) {
+      // Surface full underlying error to DevTools so VS_NETWORK / VS_HTTP_4XX
+      // root causes (DNS, CORS, 401, etc.) can actually be diagnosed.
+      console.error('[receipt] compareReceipt failed:', err);
       const msg = err instanceof Error ? err.message : 'unknown';
       setError(msg);
       setPhase('error');

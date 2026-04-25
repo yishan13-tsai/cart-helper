@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { EnvBanner } from './components/EnvBanner';
 
 const NAV_ITEMS = [
   { to: '/', labelKey: 'nav.camera' },
@@ -14,6 +15,7 @@ export function App() {
   const isCamera = pathname === '/' || pathname.startsWith('/receipt/');
   return (
     <div className="flex h-full flex-col">
+      <EnvBanner />
       {!isCamera && (
         <header className="bg-secondary-500 text-neutral-0 px-4 py-3">
           <h1 className="text-xl font-bold">{t('app.name')}</h1>

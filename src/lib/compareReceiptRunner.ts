@@ -33,11 +33,13 @@ export async function runCompare(
     return await realCompareReceipt(blob, cart, locale, cartId);
   } catch (err) {
     if (err instanceof VaultSageError) {
+      console.error('[compare] VaultSage error:', err.code, err.message, err);
       const tagged = new Error(err.code) as Error & { code: string; cause?: unknown };
       tagged.code = err.code;
       tagged.cause = err;
       throw tagged;
     }
+    console.error('[compare] unexpected error:', err);
     throw err;
   }
 }

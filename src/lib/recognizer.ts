@@ -60,11 +60,13 @@ export const realRecognizer: Recognizer = async (blob, locale) => {
     }));
   } catch (err) {
     if (err instanceof VaultSageError) {
+      console.error('[recognizer] VaultSage error:', err.code, err.message, err);
       const tagged = new Error(err.code) as Error & { code: string; cause?: unknown };
       tagged.code = err.code;
       tagged.cause = err;
       throw tagged;
     }
+    console.error('[recognizer] unexpected error:', err);
     throw err;
   }
 };
