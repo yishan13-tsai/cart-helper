@@ -1,0 +1,16 @@
+export { request } from './http';
+export { uploadFile, pollProcessing } from './files';
+export { chatV2, askJson } from './chat';
+export { recognizeProducts } from './recognize';
+export { compareReceipt } from './compare';
+export { preprocessImage } from './image';
+export { extractJson } from './json';
+export { buildOcrPrompt, OcrPayloadSchema } from './prompts/ocr';
+export { buildReceiptPrompt, ReceiptComparisonSchema } from './prompts/receipt';
+export { VaultSageError } from './errors';
+export { getConfig } from './config';
+export type { ChatMessage, ChatOptions } from './chat';
+export type { RecognizedItem, RecognizeResult } from './recognize';
+export type { CompareResult } from './compare';
+export type { OcrLocaleHint } from './prompts/ocr';
+export type { VaultSageErrorCode } from './errors';

@@ -1,0 +1,146 @@
+{
+  "app": {
+    "name": "お買い物アシスタント",
+    "tagline": "買い物、いっしょに賢く。"
+  },
+  "nav": {
+    "camera": "スキャン",
+    "cart": "カート",
+    "history": "履歴",
+    "settings": "設定"
+  },
+  "camera": {
+    "mode": {
+      "product": "商品",
+      "receipt": "レシート"
+    },
+    "shutter": {
+      "hint": "商品を狙ってタップ",
+      "aria": "撮影"
+    },
+    "title": "カメラ",
+    "runningTotal": {
+      "unit": "点"
+    },
+    "permission": {
+      "requesting": "カメラ権限をリクエスト中…",
+      "denied": "カメラ権限が取得できません",
+      "cta": "写真ライブラリを使う",
+      "fallbackInput": "ライブラリから写真を選ぶ",
+      "retry": "もう一度"
+    },
+    "unsupported": "このデバイスはカメラに対応していません",
+    "recognizing": "認識中…",
+    "error": {
+      "captureFailed": "撮影に失敗しました。もう一度お試しください。",
+      "recognizeFailed": "認識に失敗しました。もう一度お試しください。"
+    }
+  },
+  "loading": {
+    "recognizing": "認識中...",
+    "comparing": "照合中..."
+  },
+  "cart": {
+    "empty": {
+      "title": "カートは空です",
+      "subtitle": "下でスキャン開始"
+    },
+    "total": "小計",
+    "items_count": "{{n}}点",
+    "estimated": "概算",
+    "fxApprox": "≈ {{symbol}}{{amount}} {{currency}}",
+    "fxStale": "(キャッシュレート)",
+    "fxError": "レート取得失敗",
+    "itemsHeader": "商品",
+    "item": {
+      "remove": "削除",
+      "unknownPrice": "—"
+    },
+    "actions": {
+      "continueScan": "続けて撮影",
+      "compareReceipt": "レシート照合"
+    }
+  },
+  "receipt": {
+    "capture": {
+      "title": "レシートを撮影",
+      "hint": "レシートをフレームに収める",
+      "placeholder": "撮影後、自動で照合します",
+      "empty": "先に商品をカートに追加してください"
+    }
+  },
+  "comparison": {
+    "title": "レシート照合",
+    "cartTotal": "カート",
+    "receiptTotal": "レシート",
+    "difference": "差額",
+    "differenceMatch": "金額一致",
+    "sections": {
+      "matched": "一致 ({{n}})",
+      "missing": "レシート不足 ({{n}})",
+      "extra": "レシート過剰 ({{n}})"
+    },
+    "sectionEmpty": "なし",
+    "backToCart": "カートへ戻る",
+    "startOver": "新しく始める"
+  },
+  "history": {
+    "empty": {
+      "title": "履歴はまだありません",
+      "subtitle": "商品をスキャンしてレシートと照合すると、ここに表示されます",
+      "cta": "スキャンを始める"
+    },
+    "entry": {
+      "noComparison": "未照合"
+    },
+    "notFound": {
+      "title": "履歴が見つかりません",
+      "cta": "カートへ戻る"
+    }
+  },
+  "ocr": {
+    "confirm": {
+      "title": "{{count}}点の商品を確認",
+      "empty": "商品が認識されませんでした",
+      "lowConfidence": "信頼度が低い",
+      "unknownPrice": "価格不明",
+      "name": "商品名",
+      "unitPrice": "単価",
+      "quantity": "数量",
+      "cancel": "キャンセル",
+      "add": "カートに追加"
+    }
+  },
+  "error": {
+    "network": "ネットワークエラー",
+    "low_confidence": "認識精度が低いです。ご確認ください"
+  },
+  "settings": {
+    "locale": {
+      "label": "言語"
+    },
+    "currency": {
+      "label": "通貨",
+      "hint": "カート合計の換算表示に使う通貨です。"
+    },
+    "danger": {
+      "label": "危険な操作"
+    },
+    "clearCart": {
+      "label": "カートを空にする（{{n}}点）",
+      "confirm": "{{n}}点をすべて削除しますか？取り消しできません。"
+    },
+    "clearHistory": {
+      "label": "履歴を削除する（{{n}}件）",
+      "confirm": "{{n}}件の履歴を削除しますか？取り消しできません。"
+    }
+  },
+  "common": {
+    "currency": {
+      "TWD": "NT$",
+      "USD": "$",
+      "JPY": "¥",
+      "KRW": "₩"
+    }
+  }
+}

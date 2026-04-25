@@ -1,0 +1,146 @@
+{
+  "app": {
+    "name": "ShopBuddy",
+    "tagline": "Shop smart. Check twice."
+  },
+  "nav": {
+    "camera": "Scan",
+    "cart": "Cart",
+    "history": "History",
+    "settings": "Settings"
+  },
+  "camera": {
+    "mode": {
+      "product": "Items",
+      "receipt": "Receipt"
+    },
+    "shutter": {
+      "hint": "Aim and tap",
+      "aria": "Take photo"
+    },
+    "title": "Camera",
+    "runningTotal": {
+      "unit": "items"
+    },
+    "permission": {
+      "requesting": "Requesting camera access…",
+      "denied": "Camera access denied",
+      "cta": "Use photo library",
+      "fallbackInput": "Pick a photo from library",
+      "retry": "Try again"
+    },
+    "unsupported": "This device doesn't support the camera",
+    "recognizing": "Recognizing…",
+    "error": {
+      "captureFailed": "Capture failed. Please try again.",
+      "recognizeFailed": "Recognition failed. Please try again."
+    }
+  },
+  "loading": {
+    "recognizing": "Recognizing...",
+    "comparing": "Comparing..."
+  },
+  "cart": {
+    "empty": {
+      "title": "Your cart is empty",
+      "subtitle": "Tap below to scan"
+    },
+    "total": "Subtotal",
+    "items_count": "{{n}} items",
+    "estimated": "Estimated",
+    "fxApprox": "≈ {{symbol}}{{amount}} {{currency}}",
+    "fxStale": "(cached rate)",
+    "fxError": "rate unavailable",
+    "itemsHeader": "Items",
+    "item": {
+      "remove": "Remove",
+      "unknownPrice": "—"
+    },
+    "actions": {
+      "continueScan": "Keep scanning",
+      "compareReceipt": "Compare receipt"
+    }
+  },
+  "receipt": {
+    "capture": {
+      "title": "Scan receipt",
+      "hint": "Fit the receipt in frame",
+      "placeholder": "Tap the shutter when framed",
+      "empty": "Add items to your cart first"
+    }
+  },
+  "comparison": {
+    "title": "Receipt comparison",
+    "cartTotal": "Cart",
+    "receiptTotal": "Receipt",
+    "difference": "Difference",
+    "differenceMatch": "Totals match",
+    "sections": {
+      "matched": "Matched ({{n}})",
+      "missing": "Missing from receipt ({{n}})",
+      "extra": "Extra on receipt ({{n}})"
+    },
+    "sectionEmpty": "None",
+    "backToCart": "Back to cart",
+    "startOver": "Start a new run"
+  },
+  "history": {
+    "empty": {
+      "title": "No history yet",
+      "subtitle": "Scan items, build a cart, then compare with a receipt — your records will show up here.",
+      "cta": "Start scanning"
+    },
+    "entry": {
+      "noComparison": "No comparison"
+    },
+    "notFound": {
+      "title": "Record not found",
+      "cta": "Back to cart"
+    }
+  },
+  "ocr": {
+    "confirm": {
+      "title": "Confirm {{count}} item(s)",
+      "empty": "No items detected",
+      "lowConfidence": "Low confidence",
+      "unknownPrice": "Price unknown",
+      "name": "Name",
+      "unitPrice": "Unit price",
+      "quantity": "Quantity",
+      "cancel": "Cancel",
+      "add": "Add to cart"
+    }
+  },
+  "error": {
+    "network": "Network error",
+    "low_confidence": "Low confidence — please review"
+  },
+  "settings": {
+    "locale": {
+      "label": "Language"
+    },
+    "currency": {
+      "label": "Default currency",
+      "hint": "Used for the converted total shown next to your cart."
+    },
+    "danger": {
+      "label": "Danger zone"
+    },
+    "clearCart": {
+      "label": "Clear cart ({{n}})",
+      "confirm": "Remove all {{n}} item(s) from your cart? This cannot be undone."
+    },
+    "clearHistory": {
+      "label": "Clear history ({{n}})",
+      "confirm": "Delete all {{n}} saved record(s)? This cannot be undone."
+    }
+  },
+  "common": {
+    "currency": {
+      "TWD": "NT$",
+      "USD": "$",
+      "JPY": "¥",
+      "KRW": "₩"
+    }
+  }
+}
