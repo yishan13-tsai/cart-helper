@@ -92,21 +92,28 @@ src/
   locales/{zh-TW,en,ko,ja}/common.json
 ```
 
-## Deploy (Vercel — recommended)
+## Deploy
 
-```bash
-# one-time
-pnpm install -g vercel
-vercel login
-vercel link
+### Render (Static Site — current target)
 
-# every deploy
-vercel --prod
-```
+`render.yaml` is committed at the repo root for Infrastructure-as-Code deploys.
 
-**Required env var on Vercel**: `VITE_VAULTSAGE_API_KEY` (use the dedicated hackathon account key, not your personal one — see CRITICAL_ISSUES.md).
+1. Open https://dashboard.render.com/static/new
+2. Connect this repo (`yishan13-tsai/cart-helper`)
+3. Render auto-detects `render.yaml` — confirm:
+   - Build command: `corepack enable && pnpm install --frozen-lockfile && pnpm build`
+   - Publish directory: `./dist`
+   - Node version: 20
+4. Add the secret env var: `VITE_VAULTSAGE_API_KEY` (paste your VaultSage personal key)
+   - `VITE_VAULTSAGE_BASE_URL` is already set in `render.yaml`
+5. Click **Create Static Site** — first deploy takes ~3 minutes
+6. Render provides a `*.onrender.com` URL — paste it into the NURIE submission form
 
-`vercel.json` is already configured: framework=vite, output=dist, SPA rewrites for client-side routing.
+SPA routing is handled by `public/_redirects` (`/* /index.html 200`), which Render Static Sites honors natively.
+
+### Vercel (alternate path)
+
+`vercel.json` is also committed if you prefer Vercel: import the repo at https://vercel.com/new — framework auto-detects, just set `VITE_VAULTSAGE_API_KEY` in Project Settings → Environment Variables.
 
 ## Submission checklist (2026-05-25)
 
