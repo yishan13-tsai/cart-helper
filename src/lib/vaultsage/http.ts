@@ -25,9 +25,6 @@ const MAX_RETRY_AFTER_MS = 5_000;
 
 export async function request(path: string, options: HttpOptions = {}): Promise<Response> {
   const config = options.config ?? getConfig();
-  if (!config.apiKey) {
-    throw new VaultSageError('VS_NO_API_KEY', 'VITE_VAULTSAGE_API_KEY is not set');
-  }
   const fetcher = options.fetcher ?? fetch;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const method = options.method ?? 'GET';
@@ -35,10 +32,9 @@ export async function request(path: string, options: HttpOptions = {}): Promise<
   const userRetries = options.retries;
   const networkRetries = userRetries ?? (isIdempotent ? 2 : 0);
   const url = path.startsWith('http') ? path : `${config.baseUrl}${path}`;
-  const headers: Record<string, string> = {
-    'X-Api-Key': config.apiKey,
-    ...(options.headers ?? {}),
-  };
+  // X-Api-Key is injected by the BFF proxy server-side, NOT here. Browser
+  // bundle has no key. See server/index.js and vite.config.ts.
+  const headers: Record<string, string> = { ...(options.headers ?? {}) };
 
   let lastError: unknown;
   let networkAttempts = 0;
@@ -70,7 +66,6 @@ export async function request(path: string, options: HttpOptions = {}): Promise<
       if (isAbort && options.signal?.aborted) throw err;
       if (isAbort) {
         lastError = new VaultSageError('VS_TIMEOUT', `request to ${path} timed out after ${timeoutMs}ms`);
-        // Treat timeouts like network errors for retry purposes.
         if (networkAttempts >= networkRetries) throw lastError;
         networkAttempts += 1;
         await sleep(RETRY_BACKOFF_MS * networkAttempts);
@@ -84,8 +79,6 @@ export async function request(path: string, options: HttpOptions = {}): Promise<
     }
     clearTimeout(timer);
 
-    // 429 / 5xx are server-driven: safe to retry even for POST (server told us
-    // to back off, body may not have been processed).
     if ((res.status === 429 || res.status >= 500) && serverRetryAttempts < MAX_SERVER_RETRIES) {
       const code = res.status === 429 ? 'VS_HTTP_4XX' : 'VS_HTTP_5XX';
       lastError = new VaultSageError(code, `HTTP ${res.status}`, { status: res.status });

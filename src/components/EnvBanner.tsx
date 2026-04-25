@@ -1,20 +1,43 @@
-import { getConfig } from '../lib/vaultsage/config';
+import { useEffect, useState } from 'react';
+
+interface HealthState {
+  ok: boolean;
+  hasApiKey?: boolean;
+  upstream?: string;
+}
 
 /**
- * Shown when VITE_VAULTSAGE_API_KEY was not baked into the bundle at build time.
- * App still works in mock mode, but real OCR / receipt comparison will not run.
+ * Pings the BFF health endpoint at startup and shows a red banner if the
+ * server is unreachable or the proxy was started without VAULTSAGE_API_KEY.
  *
- * Dismissible per-session via sessionStorage so it doesn't nag through a demo,
- * but reappears on hard refresh so you can't forget to fix it before a real run.
+ * In Vite dev mode there is no /healthz endpoint (the dev proxy handles
+ * /api/v1 only), so this component stays silent in dev.
  */
 export function EnvBanner() {
-  const cfg = getConfig();
-  if (cfg.apiKey) return null;
+  const [state, setState] = useState<HealthState | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/healthz')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data) setState(data as HealthState);
+      })
+      .catch(() => {
+        // No /healthz route in dev — not an error.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!state) return null;
+  if (state.ok && state.hasApiKey) return null;
 
   return (
     <div className="bg-danger-500 px-3 py-2 text-center text-xs leading-snug text-neutral-0">
-      ⚠️ <strong>VITE_VAULTSAGE_API_KEY</strong> not set —
-      app is in <strong>mock mode</strong>. Set it in Render env vars and redeploy.
+      ⚠️ Server is missing <strong>VAULTSAGE_API_KEY</strong>. Real OCR / receipt comparison
+      will fail. Set it in Render env vars and redeploy.
     </div>
   );
 }

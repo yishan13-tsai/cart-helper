@@ -1,5 +1,4 @@
 import type { CartItem, Currency } from '../types';
-import { getConfig } from './vaultsage/config';
 import { recognizeProducts, VaultSageError } from './vaultsage';
 import type { OcrLocaleHint } from './vaultsage';
 
@@ -79,7 +78,7 @@ export function resolveRecognizer(): Recognizer {
       return injected as Recognizer;
     }
   }
-  return getConfig().apiKey ? realRecognizer : mockRecognizer;
+  return realRecognizer;
 }
 
 const LOCALE_NAMES: Record<string, string> = {

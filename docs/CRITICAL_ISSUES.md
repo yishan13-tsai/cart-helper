@@ -1,5 +1,33 @@
 # 🚨 Critical Issues (for user on return)
 
+## ✅ RESOLVED — VaultSage CORS allowlist (2026-04-25)
+
+**Status**: Fixed by switching from static-only deploy to BFF proxy architecture.
+
+### What was the problem
+VaultSage `api.vaultsage.ai` enforces a CORS origin allowlist that **only includes `localhost`**. Direct browser calls from any deployed domain (`*.onrender.com`, `*.github.io`, LAN IPs like `192.168.x.x`, custom domains) get rejected at preflight with `HTTP 400` and no `access-control-allow-origin` header. The browser then refuses the actual request, the fetch() rejects, and our client surfaces it as `VS_NETWORK`.
+
+This blocked any non-localhost demo (Render, mobile via LAN, etc.).
+
+### Fix shipped
+Replaced Render Static Site with **Render Web Service running an Express BFF** (`server/index.js`). The server:
+- Serves the Vite-built `dist/` as static files with SPA fallback
+- Reverse-proxies `/api/v1/*` to `https://api.vaultsage.ai/api/v1/*`
+- Injects `X-Api-Key` server-side from the `VAULTSAGE_API_KEY` env var
+- Strips `Origin` / `Referer` / `Cookie` from the forwarded request
+
+Browser bundle no longer contains the API key (massive security improvement) and never talks to `api.vaultsage.ai` directly. All requests go to same-origin `/api/v1/*`, so CORS is a non-issue.
+
+Vite dev server has the same proxy wired in `vite.config.ts` so `pnpm dev` still works the same way.
+
+### What user must do
+1. **Delete the old Render Static Site** if you created one earlier.
+2. **Create a new Render Web Service** from the `cart-helper` repo (it auto-detects `render.yaml`).
+3. Set the secret env var **`VAULTSAGE_API_KEY`** (no `VITE_` prefix anymore).
+4. Deploy — the same `cart-helper.onrender.com` URL now works for OCR + receipt comparison from any device.
+
+---
+
 ## ⚠️ MITIGATED but NOT reliable — VaultSage account contamination
 
 **Status (2026-04-25)**: Workaround helps but **is not deterministic**. Results vary run-to-run on the same image.

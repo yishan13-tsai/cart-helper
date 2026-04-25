@@ -1,31 +1,16 @@
 services:
   - type: web
-    runtime: static
+    runtime: node
     name: cart-helper
+    plan: free
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
-    staticPublishPath: ./dist
+    startCommand: pnpm start
+    healthCheckPath: /healthz
     pullRequestPreviewsEnabled: true
-    headers:
-      - path: /*
-        name: X-Frame-Options
-        value: DENY
-      - path: /*
-        name: Referrer-Policy
-        value: strict-origin-when-cross-origin
-      - path: /assets/*
-        name: Cache-Control
-        value: public, max-age=31536000, immutable
-      - path: /sw.js
-        name: Cache-Control
-        value: public, max-age=0, must-revalidate
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
     envVars:
-      - key: VITE_VAULTSAGE_API_KEY
+      - key: VAULTSAGE_API_KEY
         sync: false
-      - key: VITE_VAULTSAGE_BASE_URL
+      - key: VAULTSAGE_BASE_URL
         value: https://api.vaultsage.ai
       - key: NODE_VERSION
         value: '20'

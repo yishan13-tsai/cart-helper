@@ -11,7 +11,6 @@ import { buildReceiptPrompt, ReceiptComparisonSchema } from './prompts/receipt';
 
 const TEST_CONFIG: VaultSageConfig = {
   baseUrl: 'https://api.test.local',
-  apiKey: 'test-key',
 };
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -44,21 +43,12 @@ describe('extractJson', () => {
 });
 
 describe('http.request', () => {
-  it('throws VS_NO_API_KEY when key missing', async () => {
-    await expect(
-      request('/api/v1/files/', {
-        config: { baseUrl: 'https://x', apiKey: null },
-        fetcher: vi.fn() as unknown as typeof fetch,
-      }),
-    ).rejects.toMatchObject({ code: 'VS_NO_API_KEY' });
-  });
-
-  it('attaches X-Api-Key header', async () => {
+  it('does not inject X-Api-Key (BFF proxy adds it server-side)', async () => {
     const fetcher = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }));
     await request('/foo', { config: TEST_CONFIG, fetcher: fetcher as unknown as typeof fetch });
     expect(fetcher.mock.calls[0][0]).toBe('https://api.test.local/foo');
     const init = fetcher.mock.calls[0][1] as RequestInit;
-    expect((init.headers as Record<string, string>)['X-Api-Key']).toBe('test-key');
+    expect((init.headers as Record<string, string>)['X-Api-Key']).toBeUndefined();
   });
 
   it('does not retry 4xx responses', async () => {

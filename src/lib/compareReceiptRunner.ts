@@ -1,7 +1,6 @@
 import { compareReceipt as realCompareReceipt, VaultSageError } from './vaultsage';
 import type { CompareResult } from './vaultsage';
 import type { CartItem } from '../types';
-import { getConfig } from './vaultsage/config';
 
 export type ComparatorLocale = { code: string; name: string; currency: CartItem['currency'] };
 export type Comparator = (
@@ -26,9 +25,6 @@ export async function runCompare(
   if (typeof window !== 'undefined' && typeof window.__MOCK_COMPARE__ === 'function') {
     return window.__MOCK_COMPARE__(blob, cart, locale, cartId);
   }
-  if (!getConfig().apiKey) {
-    return mockComparator(blob, cart, locale, cartId);
-  }
   try {
     return await realCompareReceipt(blob, cart, locale, cartId);
   } catch (err) {
@@ -44,7 +40,8 @@ export async function runCompare(
   }
 }
 
-const mockComparator: Comparator = async (_blob, cart, locale, cartId) => {
+// Mock helper kept so demos / Storybook can wire it manually if needed.
+export const mockComparator: Comparator = async (_blob, cart, locale, cartId) => {
   await new Promise((r) => setTimeout(r, 800));
   const totalInCart = cart.reduce(
     (sum, item) => sum + (item.unitPrice ?? 0) * item.quantity,

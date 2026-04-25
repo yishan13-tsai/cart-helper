@@ -1,13 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-const configState = vi.hoisted(() => ({ apiKey: null as string | null }));
-
-vi.mock('./vaultsage/config', () => ({
-  getConfig: () => ({
-    baseUrl: 'https://api.vaultsage.ai',
-    apiKey: configState.apiKey,
-  }),
-}));
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   mockRecognizer,
@@ -15,10 +6,6 @@ import {
   resolveRecognizer,
   type Recognizer,
 } from './recognizer';
-
-beforeEach(() => {
-  configState.apiKey = null;
-});
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -44,14 +31,14 @@ describe('mockRecognizer', () => {
 });
 
 describe('resolveRecognizer', () => {
-  it('returns __MOCK_RECOGNIZE__ when injected', () => {
+  it('returns __MOCK_RECOGNIZE__ when injected on window', () => {
     const injected: Recognizer = vi.fn();
     vi.stubGlobal('window', { __MOCK_RECOGNIZE__: injected });
     expect(resolveRecognizer()).toBe(injected);
   });
 
-  it('falls back to mockRecognizer when no API key configured', () => {
-    expect(resolveRecognizer()).toBe(mockRecognizer);
+  it('falls through to realRecognizer when no window mock is present', () => {
+    expect(resolveRecognizer()).toBe(realRecognizer);
   });
 });
 

@@ -92,28 +92,31 @@ src/
   locales/{zh-TW,en,ko,ja}/common.json
 ```
 
-## Deploy
+## Architecture
 
-### Render (Static Site — current target)
+The app is a Vite-built SPA served by a tiny Express BFF (`server/index.js`). The BFF:
+- Serves the static `dist/` with SPA fallback
+- Reverse-proxies `/api/v1/*` → `https://api.vaultsage.ai/api/v1/*`, injecting `X-Api-Key` server-side from `VAULTSAGE_API_KEY`
 
-`render.yaml` is committed at the repo root for Infrastructure-as-Code deploys.
+**Why a BFF, not pure static**: VaultSage's CORS allowlist only lets `localhost` call the API directly from a browser. Any deployed origin (Render, GitHub Pages, custom domain, LAN IP) gets blocked at preflight. The BFF makes server-side calls that bypass CORS entirely, and as a bonus the API key never reaches the browser.
 
-1. Open https://dashboard.render.com/static/new
-2. Connect this repo (`yishan13-tsai/cart-helper`)
-3. Render auto-detects `render.yaml` — confirm:
+In `pnpm dev`, Vite's dev server has the same `/api/v1` proxy wired in `vite.config.ts`, so the dev experience is identical without needing to run the Express server separately.
+
+## Deploy (Render Web Service)
+
+`render.yaml` at the repo root is the IaC config.
+
+1. https://dashboard.render.com/web/new
+2. Connect `yishan13-tsai/cart-helper`
+3. Render auto-detects `render.yaml`:
    - Build command: `corepack enable && pnpm install --frozen-lockfile && pnpm build`
-   - Publish directory: `./dist`
+   - Start command: `pnpm start`
+   - Health check: `/healthz`
    - Node version: 20
-4. Add the secret env var: `VITE_VAULTSAGE_API_KEY` (paste your VaultSage personal key)
-   - `VITE_VAULTSAGE_BASE_URL` is already set in `render.yaml`
-5. Click **Create Static Site** — first deploy takes ~3 minutes
-6. Render provides a `*.onrender.com` URL — paste it into the NURIE submission form
-
-SPA routing is handled by `public/_redirects` (`/* /index.html 200`), which Render Static Sites honors natively.
-
-### Vercel (alternate path)
-
-`vercel.json` is also committed if you prefer Vercel: import the repo at https://vercel.com/new — framework auto-detects, just set `VITE_VAULTSAGE_API_KEY` in Project Settings → Environment Variables.
+4. **Set the secret env var: `VAULTSAGE_API_KEY`** (paste your VaultSage personal key — no `VITE_` prefix)
+   - `VAULTSAGE_BASE_URL` is already set in `render.yaml`
+5. Click **Create Web Service** — first deploy takes ~3 minutes
+6. Open `/healthz` on the Render URL to confirm the BFF is up: `{"ok":true,"hasApiKey":true,...}`
 
 ## Submission checklist (2026-05-25)
 
