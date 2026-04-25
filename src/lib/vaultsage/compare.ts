@@ -22,11 +22,15 @@ export async function compareReceipt(
 ): Promise<CompareResult> {
   const { blob: prepared } = await preprocessImage(receiptBlob);
   const upload = await uploadFile(prepared);
-  await pollProcessing(upload.file_id);
+  // Wait for AI summary indexing — chat v2 uses RAG (contextual_file_ids)
+  // instead of vision (file_ids), because VaultSage's chat-end vision
+  // hallucinates while its indexing-end summary is accurate.
+  await pollProcessing(upload.file_id, { waitFor: 'summary' });
 
   const prompt = buildReceiptPrompt(toPromptCart(cart), locale);
-  const { data } = await askJson(prompt, [upload.file_id], {
+  const { data } = await askJson(prompt, undefined, {
     schema: ReceiptComparisonSchema,
+    contextualFileIds: [upload.file_id],
   });
 
   const receipt: Receipt = {

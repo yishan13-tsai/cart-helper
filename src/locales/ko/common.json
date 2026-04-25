@@ -31,6 +31,9 @@
     },
     "unsupported": "이 기기는 카메라를 지원하지 않습니다",
     "recognizing": "인식 중…",
+    "toast": {
+      "queued": "처리 중 ({{count}})"
+    },
     "error": {
       "captureFailed": "촬영에 실패했습니다. 다시 시도해 주세요.",
       "recognizeFailed": "인식에 실패했습니다. 다시 시도해 주세요."
@@ -59,6 +62,13 @@
     "actions": {
       "continueScan": "계속 스캔",
       "compareReceipt": "영수증 대조"
+    },
+    "pendingHeader": "처리 중",
+    "pending": {
+      "recognizing": "인식 중…",
+      "subtitle": "완료되면 장바구니에 자동 추가됩니다",
+      "failed": "인식 실패",
+      "dismiss": "제거"
     }
   },
   "receipt": {

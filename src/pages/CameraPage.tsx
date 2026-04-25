@@ -1,62 +1,111 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { CameraCapture } from '../components/CameraCapture';
-import { OcrConfirmModal } from '../components/OcrConfirmModal';
 import { useCartStore } from '../store/cart';
 import { resolveRecognizer } from '../lib/recognizer';
-import type { CartItem } from '../types';
-import { useTranslation } from 'react-i18next';
 
 type Mode = 'product' | 'receipt';
 
+function uuid(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+async function blobToDataURL(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
 export function CameraPage() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>('product');
-  const [recognizing, setRecognizing] = useState(false);
-  const [pending, setPending] = useState<CartItem[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
   const items = useCartStore((s) => s.items);
+  const pendingCount = useCartStore((s) => s.pendingItems.length);
   const total = useCartStore((s) => s.total);
   const currency = useCartStore((s) => s.currency);
   const addItem = useCartStore((s) => s.addItem);
+  const addPending = useCartStore((s) => s.addPending);
+  const removePending = useCartStore((s) => s.removePending);
+  const markPendingFailed = useCartStore((s) => s.markPendingFailed);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 1500);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   async function handleCapture(blob: Blob) {
-    if (mode !== 'product') return;
-    setError(null);
-    setRecognizing(true);
-    try {
-      const recognizer = resolveRecognizer();
-      const recognized = await recognizer(blob, i18n.language);
-      setPending(recognized);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : t('camera.error.recognizeFailed'),
-      );
-    } finally {
-      setRecognizing(false);
+    if (mode === 'receipt') {
+      // Receipt comparison stays synchronous — there's only one operation and
+      // it's the demo hero moment, so we want the user to see the result page.
+      navigate('/receipt/capture');
+      return;
     }
+
+    // Product mode: fire-and-forget. Show pending placeholder in cart, return
+    // to camera immediately for the next shot.
+    const pendingId = uuid();
+    let thumbnailUrl = '';
+    try {
+      thumbnailUrl = await blobToDataURL(blob);
+    } catch {
+      // Thumbnail failure is non-fatal — just an empty preview.
+    }
+    addPending({ id: pendingId, thumbnailUrl });
+    setToast(t('camera.toast.queued', { count: pendingCount + 1 }));
+
+    // Run the recognizer in the background. Resolves into real cart items
+    // when done; on failure the pending entry switches to the failed state
+    // so the user can retry / dismiss from the cart page.
+    void (async () => {
+      try {
+        const recognizer = resolveRecognizer();
+        const recognized = await recognizer(blob, i18n.language);
+        // Strip the synthetic recognizer ids — addItem assigns its own.
+        recognized.forEach(({ id: _id, createdAt: _createdAt, ...rest }) =>
+          addItem(rest),
+        );
+        removePending(pendingId);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'unknown';
+        markPendingFailed(pendingId, msg);
+      }
+    })();
   }
 
-  function handleConfirm(confirmed: CartItem[]) {
-    confirmed.forEach(({ id: _id, createdAt: _createdAt, ...rest }) =>
-      addItem(rest),
-    );
-    setPending(null);
-  }
-
-  const symbol = t(`common.currency.${currency}`);
+  const symbol = t(`common.currency.${currency}` as
+    | 'common.currency.TWD'
+    | 'common.currency.USD'
+    | 'common.currency.JPY'
+    | 'common.currency.KRW');
 
   return (
     <div className="relative flex h-full flex-col bg-neutral-900">
       <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between bg-secondary-500/90 px-4 py-2 text-neutral-0 backdrop-blur">
         <h1 className="text-sm font-bold">{t('camera.title')}</h1>
-        <div className="flex items-baseline gap-1">
+        <div className="flex items-baseline gap-2">
           <span className="font-mono text-base">
             {symbol} {total.toLocaleString()}
           </span>
           <span className="text-2xs text-neutral-400">
             {items.length} {t('camera.runningTotal.unit')}
           </span>
+          {pendingCount > 0 && (
+            <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-primary-500/30 px-2 py-0.5 text-2xs">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary-500" />
+              {pendingCount}
+            </span>
+          )}
         </div>
       </div>
 
@@ -65,31 +114,17 @@ export function CameraPage() {
       </div>
 
       <div className="flex-1">
-        <CameraCapture onCapture={handleCapture} disabled={recognizing} />
+        <CameraCapture onCapture={handleCapture} />
       </div>
 
-      {recognizing && (
-        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-neutral-900/60 text-neutral-0">
-          <div className="flex items-center gap-3 rounded-full bg-neutral-900/80 px-4 py-2 text-sm">
-            <span className="h-3 w-3 animate-pulse rounded-full bg-primary-500" />
-            {t('camera.recognizing')}
+      {toast && (
+        <div className="pointer-events-none absolute inset-x-0 top-28 z-30 flex justify-center animate-pop-in">
+          <div className="flex items-center gap-2 rounded-full bg-primary-500/95 px-4 py-2 text-xs font-bold text-neutral-0 shadow-hero">
+            <span aria-hidden>✓</span>
+            {toast}
           </div>
         </div>
       )}
-
-      {error && (
-        <div className="absolute inset-x-4 top-24 z-30 rounded-lg bg-danger-500 px-3 py-2 text-xs text-neutral-0">
-          {error}
-        </div>
-      )}
-
-      <OcrConfirmModal
-        open={pending != null}
-        items={pending ?? []}
-        currency={currency}
-        onCancel={() => setPending(null)}
-        onConfirm={handleConfirm}
-      />
     </div>
   );
 }

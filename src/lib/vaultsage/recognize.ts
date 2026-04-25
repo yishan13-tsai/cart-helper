@@ -21,10 +21,19 @@ export async function recognizeProducts(
 ): Promise<RecognizeResult> {
   const { blob: prepared } = await preprocessImage(blob);
   const upload = await uploadFile(prepared);
-  await pollProcessing(upload.file_id);
+  // Wait for AI summary indexing — chat v2 will use the indexed text via
+  // contextual_file_ids (RAG), not direct vision (which hallucinates).
+  await pollProcessing(upload.file_id, { waitFor: 'summary' });
 
   const prompt = buildOcrPrompt(locale);
-  const { data } = await askJson(prompt, [upload.file_id], { schema: OcrPayloadSchema });
+  // No file_ids in the message: forces chat v2 into RAG mode where it pulls
+  // the file's ai_long_desc (which VaultSage's indexing pipeline already
+  // produced accurately) instead of running its own — much weaker — vision
+  // pass on the raw image.
+  const { data } = await askJson(prompt, undefined, {
+    schema: OcrPayloadSchema,
+    contextualFileIds: [upload.file_id],
+  });
 
   if (data.items.length === 0) {
     throw new VaultSageError('VS_LLM_EMPTY', 'OCR returned zero items');

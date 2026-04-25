@@ -6,9 +6,14 @@ type Status = 'idle' | 'requesting' | 'streaming' | 'denied' | 'unsupported';
 interface Props {
   onCapture: (blob: Blob) => void;
   disabled?: boolean;
+  /**
+   * Fraction (0-1) of the shorter video dimension to keep when cropping.
+   * Defaults to 0.70 — matches the on-screen focus frame size.
+   */
+  cropFraction?: number;
 }
 
-export function CameraCapture({ onCapture, disabled }: Props) {
+export function CameraCapture({ onCapture, disabled, cropFraction = 0.70 }: Props) {
   const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -68,11 +73,19 @@ export function CameraCapture({ onCapture, disabled }: Props) {
     const w = video.videoWidth;
     const h = video.videoHeight;
     if (!w || !h) return;
-    canvas.width = w;
-    canvas.height = h;
+
+    // Center-crop a square at cropFraction of the shorter video dimension —
+    // this matches the on-screen focus frame so what the user sees framed is
+    // what gets sent to OCR.
+    const cropSize = Math.round(Math.min(w, h) * cropFraction);
+    const sx = Math.round((w - cropSize) / 2);
+    const sy = Math.round((h - cropSize) / 2);
+
+    canvas.width = cropSize;
+    canvas.height = cropSize;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    ctx.drawImage(video, 0, 0, w, h);
+    ctx.drawImage(video, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
     canvas.toBlob(
       (blob) => {
         if (blob) onCapture(blob);
@@ -83,10 +96,15 @@ export function CameraCapture({ onCapture, disabled }: Props) {
     );
   }
 
-  function handleFilePick(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFilePick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) onCapture(file);
     e.target.value = '';
+    if (!file) return;
+    // For file picks we also center-crop to a square at cropFraction —
+    // user usually frames the price tag in the middle of the photo, and the
+    // tighter crop reduces context the OCR model can hallucinate from.
+    const cropped = await centerCropImage(file, cropFraction).catch(() => null);
+    onCapture(cropped ?? file);
   }
 
   return (
@@ -132,11 +150,7 @@ export function CameraCapture({ onCapture, disabled }: Props) {
         </Overlay>
       )}
 
-      {status === 'streaming' && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="h-56 w-56 rounded-2xl border-2 border-neutral-0/60" />
-        </div>
-      )}
+      {status === 'streaming' && <FocusFrame />}
 
       <div className="absolute inset-x-0 bottom-6 flex items-center justify-center">
         <button
@@ -160,10 +174,93 @@ export function CameraCapture({ onCapture, disabled }: Props) {
   );
 }
 
+function FocusFrame() {
+  // Dim outside + crisp corner brackets to make the crop area unmistakable.
+  return (
+    <div className="pointer-events-none absolute inset-0">
+      {/* dim mask using clip-path: cuts a 70vmin square hole in the center */}
+      <div
+        className="absolute inset-0 bg-neutral-900/55"
+        style={{
+          WebkitMaskImage:
+            'radial-gradient(circle at center, transparent 0, transparent 0), linear-gradient(#fff,#fff)',
+          maskImage:
+            'linear-gradient(#fff,#fff)',
+          // Use a square hole via inset clip-path on a sibling
+        }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(transparent 99%, transparent 99%)',
+        }}
+      />
+      <div
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center"
+        style={{
+          width: '70vmin',
+          height: '70vmin',
+          maxWidth: '320px',
+          maxHeight: '320px',
+        }}
+      >
+        {/* corner brackets */}
+        <span className="absolute left-0 top-0 h-6 w-6 border-l-[3px] border-t-[3px] border-primary-500 rounded-tl-md" />
+        <span className="absolute right-0 top-0 h-6 w-6 border-r-[3px] border-t-[3px] border-primary-500 rounded-tr-md" />
+        <span className="absolute bottom-0 left-0 h-6 w-6 border-b-[3px] border-l-[3px] border-primary-500 rounded-bl-md" />
+        <span className="absolute bottom-0 right-0 h-6 w-6 border-b-[3px] border-r-[3px] border-primary-500 rounded-br-md" />
+        {/* subtle inner outline */}
+        <span className="absolute inset-0 rounded-2xl border border-neutral-0/30" />
+      </div>
+    </div>
+  );
+}
+
 function Overlay({ children }: { children: React.ReactNode }) {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-900/85 p-6 text-center">
       {children}
     </div>
   );
+}
+
+/**
+ * Center-crop an image File to a square at `fraction` of its shorter side.
+ * Returns a JPEG Blob (quality 0.85). On any failure resolves to null and
+ * the caller falls back to the original file.
+ */
+async function centerCropImage(file: File, fraction: number): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const w = img.naturalWidth;
+        const h = img.naturalHeight;
+        const cropSize = Math.round(Math.min(w, h) * fraction);
+        const sx = Math.round((w - cropSize) / 2);
+        const sy = Math.round((h - cropSize) / 2);
+        const canvas = document.createElement('canvas');
+        canvas.width = cropSize;
+        canvas.height = cropSize;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(null);
+          return;
+        }
+        ctx.drawImage(img, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
+        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.85);
+      } catch {
+        resolve(null);
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(null);
+    };
+    img.src = url;
+  });
 }

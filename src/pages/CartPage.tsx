@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useCartStore } from '../store/cart';
+import { useCartStore, type PendingItem } from '../store/cart';
 import { useBaseCurrency } from '../hooks/useBaseCurrency';
 import { useFxPreview } from '../hooks/useFxPreview';
 import type { CartItem } from '../types';
@@ -29,6 +29,8 @@ export function CartPage() {
   const currency = useCartStore((s) => s.currency);
   const removeItem = useCartStore((s) => s.removeItem);
   const updateItem = useCartStore((s) => s.updateItem);
+  const pendingItems = useCartStore((s) => s.pendingItems);
+  const removePending = useCartStore((s) => s.removePending);
 
   const [base] = useBaseCurrency();
   const fx = useFxPreview(total, currency, base);
@@ -50,13 +52,16 @@ export function CartPage() {
         }
       />
 
-      <div className="flex-1 px-4 pb-32 pt-2">
-        {items.length === 0 ? (
+      <div className="flex-1 space-y-3 px-4 pb-32 pt-2">
+        {pendingItems.length > 0 && (
+          <PendingList items={pendingItems} onDismiss={removePending} />
+        )}
+        {items.length === 0 && pendingItems.length === 0 ? (
           <EmptyState
             title={t('cart.empty.title')}
             subtitle={t('cart.empty.subtitle')}
           />
-        ) : (
+        ) : items.length === 0 ? null : (
           <div className="animate-slide-up">
             <p className="section-label mb-2 px-1">{t('cart.itemsHeader')}</p>
             <ul className="card divide-y divide-neutral-100 overflow-hidden">
@@ -82,6 +87,71 @@ export function CartPage() {
         compareDisabled={items.length === 0}
       />
     </section>
+  );
+}
+
+function PendingList({
+  items,
+  onDismiss,
+}: {
+  items: PendingItem[];
+  onDismiss: (id: string) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="animate-slide-up">
+      <p className="section-label mb-2 px-1">{t('cart.pendingHeader')}</p>
+      <ul className="space-y-2">
+        {items.map((p) => (
+          <li
+            key={p.id}
+            className={`card flex items-center gap-3 p-3 ${
+              p.status === 'failed' ? 'border-l-4 border-danger-500' : ''
+            }`}
+          >
+            {p.thumbnailUrl ? (
+              <img
+                src={p.thumbnailUrl}
+                alt=""
+                className="h-12 w-12 flex-shrink-0 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="h-12 w-12 flex-shrink-0 rounded-lg bg-neutral-100" />
+            )}
+            <div className="min-w-0 flex-1">
+              {p.status === 'recognizing' ? (
+                <>
+                  <p className="flex items-center gap-2 text-sm font-bold text-primary-500">
+                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
+                    {t('cart.pending.recognizing')}
+                  </p>
+                  <p className="text-2xs text-neutral-400">
+                    {t('cart.pending.subtitle')}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-bold text-danger-500">
+                    {t('cart.pending.failed')}
+                  </p>
+                  <p className="truncate text-2xs text-neutral-400">
+                    {p.error ?? '—'}
+                  </p>
+                </>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => onDismiss(p.id)}
+              aria-label={t('cart.pending.dismiss')}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-400 hover:bg-neutral-100"
+            >
+              ✕
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

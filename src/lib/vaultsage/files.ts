@@ -12,7 +12,9 @@ import {
 // 10s gives plenty of headroom even on 4G.
 const UPLOAD_TIMEOUT_MS = 10_000;
 const POLL_TIMEOUT_MS = 10_000;
-const POLL_MAX_MS = 30_000;
+// Snapshot completes in ~2-3s, summary (AI extraction) typically 10-25s.
+// We default to 60s so callers waiting for summary don't flake.
+const POLL_MAX_MS = 60_000;
 const POLL_INTERVAL_MS = 750;
 const TERMINAL_STATES = new Set(['completed', 'failed', 'skipped']);
 
@@ -50,11 +52,17 @@ export interface PollOptions extends Pick<HttpOptions, 'fetcher' | 'config' | 's
   maxMs?: number;
   intervalMs?: number;
   /**
-   * Empirical: chat v2 with file_ids works once `task_snapshot_status` is terminal,
-   * even if `task_summary_status` is still processing. Defaulting to `'snapshot'`
-   * cuts the wait from ~15s to ~2.5s.
+   * Which processing tasks must complete before we resolve.
+   * - `'snapshot'`: thumbnail rendered (~2-3s). Enough if you call chat v2 with
+   *   `file_ids` (vision mode).
+   * - `'summary'`: AI extraction of file content (~10-25s). REQUIRED if you call
+   *   chat v2 with `contextual_file_ids` (RAG mode), because the model retrieves
+   *   the indexed `ai_long_desc` text instead of looking at the image. Recognizer
+   *   and comparer use this mode — VaultSage's chat-end vision hallucinates,
+   *   but its indexing-end summary is accurate.
+   * - `'both'`: wait for both (longest).
    */
-  waitFor?: 'snapshot' | 'both';
+  waitFor?: 'snapshot' | 'summary' | 'both';
 }
 
 export async function pollProcessing(
@@ -86,11 +94,15 @@ export async function pollProcessing(
     if (last.task_snapshot_status === 'failed') {
       throw new VaultSageError('VS_PROCESSING_FAILED', `snapshot processing failed for ${fileId}`);
     }
+    if (last.task_summary_status === 'failed') {
+      throw new VaultSageError('VS_PROCESSING_FAILED', `summary processing failed for ${fileId}`);
+    }
+    const snapshotReady = TERMINAL_STATES.has(last.task_snapshot_status);
+    const summaryReady = TERMINAL_STATES.has(last.task_summary_status);
     const ready =
-      waitFor === 'snapshot'
-        ? TERMINAL_STATES.has(last.task_snapshot_status)
-        : TERMINAL_STATES.has(last.task_snapshot_status) &&
-          TERMINAL_STATES.has(last.task_summary_status);
+      waitFor === 'snapshot' ? snapshotReady :
+      waitFor === 'summary' ? summaryReady :
+      snapshotReady && summaryReady;
     if (ready) return last;
     await sleep(intervalMs);
   }

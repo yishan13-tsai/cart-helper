@@ -33,7 +33,7 @@ export function buildReceiptPrompt(cart: CartLineForPrompt[], locale: OcrLocaleH
     '```json',
     cartJson,
     '```',
-    `The attached image is the receipt.`,
+    `The receipt is the file attached to this conversation. Use ONLY that file's contents — do not invent or substitute items from memory.`,
     ``,
     `Reply with JSON ONLY — no prose, no markdown, no code fences. Schema:`,
     `{`,

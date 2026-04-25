@@ -18,7 +18,7 @@ import { basename, extname, resolve } from "node:path";
 
 // ---------- config ----------
 const BASE_URL = "https://api.vaultsage.ai";
-const POLL_MAX_MS = 30_000;
+const POLL_MAX_MS = 60_000;
 const POLL_INTERVAL_MS = 750;
 
 // ---------- schemas ----------
@@ -134,10 +134,11 @@ async function pollProcessingStatus(apiKey: string, fileId: string) {
       throw new Error(`processing-status did not return file_id ${fileId}`);
     }
 
-    // Empirical: chat v2 with file_ids succeeds once snapshot is terminal,
-    // even if summary is still `processing`. Waiting for summary adds ~10-13s
-    // with no observable benefit for vision calls.
-    const done = isTerminal(last.task_snapshot_status);
+    // RAG-mode requires the AI summary to be indexed (chat v2 reads
+    // `ai_long_desc`, not the image directly). Wait for summary, not just
+    // snapshot.
+    const done =
+      isTerminal(last.task_snapshot_status) && isTerminal(last.task_summary_status);
 
     process.stdout.write(
       `  poll: snapshot=${last.task_snapshot_status} summary=${last.task_summary_status} progress=${last.processing_progress ?? "-"}\n`,
@@ -163,13 +164,15 @@ async function chatOcr(apiKey: string, fileId: string, locale: string) {
     method: "POST",
     headers: { ...authHeaders(apiKey), "Content-Type": "application/json" },
     body: JSON.stringify({
-      messages: [{ actor: "user", content: prompt, file_ids: [fileId] }],
+      // RAG-mode: NO file_ids in the message. We pass the file via
+      // contextual_file_ids so chat v2 retrieves the indexed `ai_long_desc`
+      // (which VaultSage's processing pipeline produces accurately) instead
+      // of running its own — much weaker — vision pass on the raw image.
+      // Empirical: vision mode hallucinates similar products (e.g. "Huggies
+      // diapers 1399元" when the photo is "Huggies wipes 85元"); RAG mode
+      // returns the correct values from the indexed summary.
+      messages: [{ actor: "user", content: prompt }],
       persist: false,
-      // CRITICAL: explicit empty (or single-file) contextual_file_ids stops
-      // the server from auto-pulling unrelated `suggested_files` from the
-      // caller's VaultSage account into the LLM context. Without this the
-      // OCR output gets contaminated with item names from other documents
-      // in the same account. Confirmed via scripts/contamination-test.ts.
       contextual_file_ids: [fileId],
     }),
   });
@@ -183,7 +186,9 @@ async function chatOcr(apiKey: string, fileId: string, locale: string) {
 
 function buildOcrPrompt(locale: string): string {
   return [
-    `You are a shopping product recognition assistant. From the image, identify every product and output JSON ONLY:`,
+    `You are a shopping product recognition assistant.`,
+    `Look at the file attached to this conversation and identify every distinct product.`,
+    `Reply with JSON ONLY:`,
     `{`,
     `  "items": [`,
     `    {"name": "<product name>", "unit_price": <number|null>, "quantity": <number>, "currency": "<ISO 4217>"}`,
@@ -191,6 +196,7 @@ function buildOcrPrompt(locale: string): string {
     `  "confidence": <0-1>`,
     `}`,
     `Rules:`,
+    `- Base your answer ONLY on the file in this conversation. Do NOT invent or substitute brand names from memory.`,
     `- Set price to null when uncertain.`,
     `- Do not explain. Output JSON only.`,
     `- Product names MUST be in locale: ${locale}.`,

@@ -24,7 +24,7 @@ export type OcrPayload = z.infer<typeof OcrPayloadSchema>;
 export function buildOcrPrompt(locale: OcrLocaleHint): string {
   return [
     `You are a shopping product recognition assistant.`,
-    `Look at the attached image and identify every distinct product or item.`,
+    `Look at the file attached to this conversation and identify every distinct product or item.`,
     ``,
     `Reply with JSON ONLY — no prose, no markdown, no code fences. Schema:`,
     `{`,
@@ -40,6 +40,7 @@ export function buildOcrPrompt(locale: OcrLocaleHint): string {
     `}`,
     ``,
     `Rules:`,
+    `- Base your answer ONLY on the file in this conversation. Do NOT invent or substitute brand names from memory.`,
     `- Item names MUST be written in ${locale.name}. Translate from packaging text if needed.`,
     `- If a price is illegible or ambiguous, set "unit_price" to null. NEVER guess.`,
     `- "currency" must always be a valid 3-letter ISO 4217 code (e.g. TWD, USD, JPY, KRW).`,

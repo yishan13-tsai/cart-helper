@@ -31,6 +31,9 @@
     },
     "unsupported": "This device doesn't support the camera",
     "recognizing": "Recognizing…",
+    "toast": {
+      "queued": "Queued ({{count}})"
+    },
     "error": {
       "captureFailed": "Capture failed. Please try again.",
       "recognizeFailed": "Recognition failed. Please try again."
@@ -59,6 +62,13 @@
     "actions": {
       "continueScan": "Keep scanning",
       "compareReceipt": "Compare receipt"
+    },
+    "pendingHeader": "Processing",
+    "pending": {
+      "recognizing": "Recognizing…",
+      "subtitle": "Will appear in your cart when ready",
+      "failed": "Recognition failed",
+      "dismiss": "Dismiss"
     }
   },
   "receipt": {
