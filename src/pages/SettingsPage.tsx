@@ -35,23 +35,23 @@ export function SettingsPage() {
   };
 
   return (
-    <section className="space-y-6 p-4 pb-8">
-      <h2 className="text-xl font-bold text-secondary-500">{t('nav.settings')}</h2>
-
-      <div className="space-y-2">
-        <p className="text-sm font-bold text-neutral-700">{t('settings.locale.label')}</p>
+    <section className="space-y-4 px-4 pb-24 pt-4">
+      {/* Language */}
+      <div className="card p-4">
+        <p className="section-label mb-3">{t('settings.locale.label')}</p>
         <LocaleSwitcher />
       </div>
 
-      <div className="space-y-2">
-        <label htmlFor="base-currency" className="text-sm font-bold text-neutral-700">
+      {/* Currency */}
+      <div className="card p-4">
+        <label htmlFor="base-currency" className="section-label mb-3 block">
           {t('settings.currency.label')}
         </label>
         <select
           id="base-currency"
           value={base}
           onChange={onCurrencyChange}
-          className="w-full rounded-lg border border-neutral-100 bg-neutral-0 px-3 py-2 text-base text-neutral-900 focus:border-primary-500 focus:outline-none"
+          className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-base font-medium text-neutral-900 focus:border-primary-500 focus:bg-neutral-0 focus:outline-none focus:ring-2 focus:ring-primary-100"
         >
           {CURRENCY_OPTIONS.map((code) => (
             <option key={code} value={code}>
@@ -59,44 +59,49 @@ export function SettingsPage() {
             </option>
           ))}
         </select>
-        <p className="text-xs text-neutral-400">{t('settings.currency.hint')}</p>
+        <p className="mt-2 text-xs text-neutral-400">{t('settings.currency.hint')}</p>
       </div>
 
-      <div className="space-y-3 border-t border-neutral-100 pt-6">
-        <p className="text-sm font-bold text-neutral-700">{t('settings.danger.label')}</p>
-        <button
-          type="button"
-          onClick={onClearCart}
-          disabled={cartItemCount === 0}
-          className="w-full rounded-lg border border-danger-500 px-4 py-2 text-sm font-bold text-danger-500 disabled:border-neutral-100 disabled:text-neutral-400"
-        >
-          {t('settings.clearCart.label', { n: cartItemCount })}
-        </button>
-        <button
-          type="button"
-          onClick={onClearHistory}
-          disabled={historyCount === 0}
-          className="w-full rounded-lg border border-danger-500 px-4 py-2 text-sm font-bold text-danger-500 disabled:border-neutral-100 disabled:text-neutral-400"
-        >
-          {t('settings.clearHistory.label', { n: historyCount })}
-        </button>
-      </div>
-
-      <div className="border-t border-neutral-100 pt-6 text-center text-xs text-neutral-400">
-        <p>
-          {t('app.name')} v{APP_VERSION}
+      {/* Danger Zone */}
+      <div className="card overflow-hidden border-l-4 border-danger-500">
+        <p className="section-label px-4 pb-2 pt-3 text-danger-500">
+          {t('settings.danger.label')}
         </p>
+        <div className="space-y-2 px-4 pb-4">
+          <button
+            type="button"
+            onClick={onClearCart}
+            disabled={cartItemCount === 0}
+            className="w-full rounded-xl border border-danger-500 bg-neutral-0 px-4 py-2.5 text-sm font-bold text-danger-500 transition active:scale-[0.98] active:bg-danger-50 disabled:border-neutral-200 disabled:text-neutral-400"
+          >
+            {t('settings.clearCart.label', { n: cartItemCount })}
+          </button>
+          <button
+            type="button"
+            onClick={onClearHistory}
+            disabled={historyCount === 0}
+            className="w-full rounded-xl border border-danger-500 bg-neutral-0 px-4 py-2.5 text-sm font-bold text-danger-500 transition active:scale-[0.98] active:bg-danger-50 disabled:border-neutral-200 disabled:text-neutral-400"
+          >
+            {t('settings.clearHistory.label', { n: historyCount })}
+          </button>
+        </div>
+      </div>
+
+      {/* Footer credit */}
+      <div className="pt-4 text-center text-2xs text-neutral-400">
+        <p className="font-medium">{t('app.name')} v{APP_VERSION}</p>
         <p className="mt-1">
           Powered by{' '}
           <a
             href="https://vaultsage.ai"
-            className="text-primary-500"
+            className="font-medium text-primary-500 hover:text-primary-700"
             target="_blank"
             rel="noreferrer"
           >
             VaultSage
-          </a>{' '}
-          · #vaultsage
+          </a>
+          <span className="mx-1.5 text-neutral-200">·</span>
+          <span className="font-mono">#vaultsage</span>
         </p>
       </div>
     </section>

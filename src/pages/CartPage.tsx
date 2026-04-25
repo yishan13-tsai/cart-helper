@@ -50,18 +50,16 @@ export function CartPage() {
         }
       />
 
-      <div className="flex-1 px-4 py-3">
+      <div className="flex-1 px-4 pb-32 pt-2">
         {items.length === 0 ? (
           <EmptyState
             title={t('cart.empty.title')}
             subtitle={t('cart.empty.subtitle')}
           />
         ) : (
-          <>
-            <p className="mb-2 text-xs font-bold text-neutral-700">
-              {t('cart.itemsHeader')}
-            </p>
-            <ul className="divide-y divide-neutral-100 rounded-xl bg-neutral-0">
+          <div className="animate-slide-up">
+            <p className="section-label mb-2 px-1">{t('cart.itemsHeader')}</p>
+            <ul className="card divide-y divide-neutral-100 overflow-hidden">
               {items.map((item) => (
                 <ItemRow
                   key={item.id}
@@ -74,7 +72,7 @@ export function CartPage() {
                 />
               ))}
             </ul>
-          </>
+          </div>
         )}
       </div>
 
@@ -103,13 +101,15 @@ function Hero({
   fxLine: React.ReactNode;
 }) {
   return (
-    <div className="bg-neutral-0 px-4 py-8 text-center">
-      <div className="font-mono text-[44px] leading-none text-primary-500">
-        {symbol} {total.toLocaleString()}
+    <div className="bg-hero-gradient px-4 pb-8 pt-6 text-center">
+      <p className="section-label mb-2">{estimated}</p>
+      <div className="font-mono text-hero font-bold text-primary-500 animate-pop-in">
+        <span className="text-3xl text-primary-700/80 align-top">{symbol}</span>
+        <span className="ml-1">{total.toLocaleString()}</span>
       </div>
       {fxLine}
-      <p className="mt-2 text-2xs text-neutral-400">
-        {count > 0 ? `${unit} · ${estimated}` : estimated}
+      <p className="mt-3 text-2xs font-bold uppercase tracking-wider text-neutral-400">
+        {count > 0 ? unit : '—'}
       </p>
     </div>
   );
@@ -126,10 +126,10 @@ function FxLine({
 }) {
   const { t } = useTranslation();
   if (fx.loading && fx.amount == null) {
-    return <p className="mt-1 text-xs text-neutral-400">…</p>;
+    return <p className="mt-2 text-xs text-neutral-400">…</p>;
   }
   if (fx.error) {
-    return <p className="mt-1 text-xs text-danger-500">{t('cart.fxError')}</p>;
+    return <p className="mt-2 text-xs text-danger-500">{t('cart.fxError')}</p>;
   }
   if (fx.amount == null) return null;
   const formatted = fx.amount.toLocaleString(undefined, {
@@ -137,10 +137,10 @@ function FxLine({
     maximumFractionDigits: 2,
   });
   return (
-    <p className="mt-1 text-xs text-neutral-700">
+    <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
       {t('cart.fxApprox', { symbol: baseSymbol, amount: formatted, currency: base })}
       {fx.stale && (
-        <span className="ml-1 text-neutral-400">{t('cart.fxStale')}</span>
+        <span className="text-primary-500/60">{t('cart.fxStale')}</span>
       )}
     </p>
   );
@@ -148,7 +148,10 @@ function FxLine({
 
 function EmptyState({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <div className="rounded-xl bg-neutral-100 p-6 text-center">
+    <div className="card mt-4 px-6 py-12 text-center">
+      <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-primary-50 text-3xl">
+        🛒
+      </div>
       <p className="text-base font-bold text-secondary-500">{title}</p>
       <p className="mt-1 text-sm text-neutral-700">{subtitle}</p>
     </div>
@@ -173,27 +176,29 @@ function ItemRow({
   const line =
     item.unitPrice == null ? null : (item.unitPrice * item.quantity).toLocaleString();
   return (
-    <li className="flex items-center gap-3 px-3 py-3">
+    <li className="flex items-center gap-3 px-4 py-3">
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-bold text-neutral-900">{item.name}</p>
-        <p className="mt-0.5 font-mono text-xs text-neutral-700">
-          {item.unitPrice == null
-            ? unknownPriceLabel
-            : `${symbol} ${item.unitPrice.toLocaleString()}`}
-          {' × '}
+        <p className="mt-0.5 flex items-center gap-1.5 font-mono text-xs text-neutral-700">
+          <span>
+            {item.unitPrice == null
+              ? unknownPriceLabel
+              : `${symbol}${item.unitPrice.toLocaleString()}`}
+          </span>
+          <span className="text-neutral-400">×</span>
           <QuantityStepper value={item.quantity} onChange={onQuantityChange} />
         </p>
       </div>
       <div className="text-right">
-        <p className="font-mono text-sm font-bold text-secondary-500">
-          {line == null ? unknownPriceLabel : `${symbol} ${line}`}
+        <p className="font-mono text-base font-bold text-secondary-500">
+          {line == null ? unknownPriceLabel : `${symbol}${line}`}
         </p>
       </div>
       <button
         type="button"
         onClick={onRemove}
         aria-label={removeLabel}
-        className="ml-1 px-2 py-1 text-xs text-danger-500"
+        className="ml-1 flex h-8 w-8 items-center justify-center rounded-full text-neutral-400 transition hover:bg-danger-50 hover:text-danger-500"
       >
         🗑
       </button>
@@ -218,7 +223,7 @@ function QuantityStepper({
         const next = Math.max(1, Number(e.target.value) || 1);
         onChange(next);
       }}
-      className="w-12 rounded bg-neutral-100 px-1 py-0.5 text-center font-mono text-xs"
+      className="w-12 rounded-md bg-neutral-100 px-1 py-0.5 text-center font-mono text-xs focus:bg-primary-50 focus:outline-none"
     />
   );
 }
@@ -233,10 +238,10 @@ function ActionBar({
   compareDisabled: boolean;
 }) {
   return (
-    <div className="sticky bottom-0 z-10 flex gap-2 border-t border-neutral-100 bg-neutral-0 px-4 py-3">
+    <div className="sticky bottom-0 z-10 flex gap-2 border-t border-neutral-100 bg-neutral-0/95 px-4 py-3 backdrop-blur shadow-nav">
       <Link
         to="/"
-        className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-primary-500 px-3 py-3 text-sm font-bold text-primary-500"
+        className="btn-secondary flex flex-1 items-center justify-center gap-1.5"
       >
         <span aria-hidden>📷</span>
         {continueLabel}
@@ -247,10 +252,10 @@ function ActionBar({
         onClick={(e) => {
           if (compareDisabled) e.preventDefault();
         }}
-        className={`flex flex-1 items-center justify-center gap-1 rounded-xl px-3 py-3 text-sm font-bold ${
+        className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-4 py-3 text-sm font-bold transition active:scale-[0.98] ${
           compareDisabled
-            ? 'bg-neutral-100 text-neutral-400'
-            : 'bg-primary-500 text-neutral-0'
+            ? 'bg-neutral-200 text-neutral-400'
+            : 'bg-primary-gradient text-neutral-0 shadow-hero'
         }`}
       >
         <span aria-hidden>🧾</span>

@@ -51,10 +51,10 @@ export function LocaleSwitcher({ variant = 'buttons' }: Props) {
             type="button"
             onClick={() => pick(code)}
             aria-pressed={active}
-            className={`rounded-full px-3 py-1.5 text-sm transition ${
+            className={`rounded-full px-3.5 py-1.5 text-sm transition active:scale-95 ${
               active
-                ? 'bg-primary-500 text-neutral-0 font-bold'
-                : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-100/70'
+                ? 'bg-primary-gradient text-neutral-0 font-bold shadow-hero'
+                : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
             }`}
           >
             {LOCALE_LABELS[code]}

@@ -19,10 +19,7 @@ export function ComparisonResultPage() {
         <h2 className="text-xl font-bold text-secondary-500">
           {t('history.notFound.title')}
         </h2>
-        <Link
-          to="/cart"
-          className="mt-6 rounded-lg bg-primary-500 px-6 py-3 text-sm font-bold text-neutral-0"
-        >
+        <Link to="/cart" className="btn-primary mt-6 px-6">
           {t('history.notFound.cta')}
         </Link>
       </section>
@@ -37,9 +34,9 @@ export function ComparisonResultPage() {
   };
 
   return (
-    <section className="flex min-h-full flex-col bg-neutral-100">
+    <section className="flex min-h-full flex-col bg-neutral-50">
       <SummaryHero result={result} currency={currency} locale={i18n.language} />
-      <div className="flex-1 space-y-3 px-4 pb-24 pt-4">
+      <div className="flex-1 space-y-3 px-4 pb-24 pt-2 animate-slide-up">
         <Section
           title={t('comparison.sections.matched', { n: result.matched.length })}
           tone="success"
@@ -65,17 +62,14 @@ export function ComparisonResultPage() {
           emptyLabel={t('comparison.sectionEmpty')}
         />
       </div>
-      <div className="sticky bottom-0 z-10 flex gap-2 border-t border-neutral-100 bg-neutral-0 px-4 py-3">
-        <Link
-          to="/cart"
-          className="flex flex-1 items-center justify-center rounded-xl border border-primary-500 px-3 py-3 text-sm font-bold text-primary-500"
-        >
+      <div className="sticky bottom-0 z-10 flex gap-2 border-t border-neutral-100 bg-neutral-0/95 px-4 py-3 backdrop-blur shadow-nav">
+        <Link to="/cart" className="btn-secondary flex-1 text-center">
           {t('comparison.backToCart')}
         </Link>
         <button
           type="button"
           onClick={onStartOver}
-          className="flex flex-1 items-center justify-center rounded-xl bg-primary-500 px-3 py-3 text-sm font-bold text-neutral-0"
+          className="btn-primary flex-1 bg-primary-gradient shadow-hero"
         >
           {t('comparison.startOver')}
         </button>
@@ -99,35 +93,39 @@ function SummaryHero({
   const isMatch = Math.abs(diff) < 0.01;
 
   return (
-    <div className="bg-neutral-0 px-4 pb-4 pt-6 text-center">
-      <h2 className="text-sm font-bold uppercase tracking-wide text-neutral-400">
-        {t('comparison.title')}
-      </h2>
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        <div>
-          <p className="text-xs text-neutral-700">{t('comparison.cartTotal')}</p>
-          <p className="font-mono text-xl font-bold text-secondary-500">
+    <div className="bg-hero-gradient px-4 pb-5 pt-5">
+      <p className="section-label mb-3 text-center">{t('comparison.title')}</p>
+
+      <div className="card mb-3 grid grid-cols-2 gap-1 px-4 py-3">
+        <div className="border-r border-neutral-100 pr-3 text-center">
+          <p className="text-2xs text-neutral-400">{t('comparison.cartTotal')}</p>
+          <p className="mt-1 font-mono text-xl font-bold text-secondary-500">
             {symbol}
             {formatAmount(result.totalInCart, locale)}
           </p>
         </div>
-        <div>
-          <p className="text-xs text-neutral-700">{t('comparison.receiptTotal')}</p>
-          <p className="font-mono text-xl font-bold text-secondary-500">
+        <div className="pl-3 text-center">
+          <p className="text-2xs text-neutral-400">{t('comparison.receiptTotal')}</p>
+          <p className="mt-1 font-mono text-xl font-bold text-secondary-500">
             {symbol}
             {formatAmount(result.totalOnReceipt, locale)}
           </p>
         </div>
       </div>
+
       <div
-        className={`mt-4 rounded-xl px-4 py-3 ${
-          isMatch ? 'bg-success-500/10 text-success-500' : 'bg-accent-500/10 text-accent-500'
+        className={`rounded-2xl px-4 py-4 text-center shadow-card animate-pop-in ${
+          isMatch
+            ? 'bg-success-500 text-neutral-0'
+            : 'bg-accent-500 text-neutral-0'
         }`}
       >
-        <p className="text-xs">{t('comparison.difference')}</p>
-        <p className="font-mono text-2xl font-bold">
+        <p className="text-2xs font-bold uppercase tracking-wider opacity-80">
+          {t('comparison.difference')}
+        </p>
+        <p className="mt-1 font-mono text-3xl font-bold">
           {isMatch ? (
-            t('comparison.differenceMatch')
+            <span className="text-base">{t('comparison.differenceMatch')} ✓</span>
           ) : (
             <>
               {diff > 0 ? '+' : '−'}
@@ -158,19 +156,22 @@ function Section({
 }) {
   const [open, setOpen] = useState(items.length > 0);
   const symbol = currencySymbol(currency);
-  const toneClass = TONE_CLASSES[tone];
+  const tc = TONE_CLASSES[tone];
 
   return (
-    <div className="overflow-hidden rounded-xl bg-neutral-0">
+    <div className={`card overflow-hidden border-l-4 ${tc.border}`}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between px-4 py-3"
+        className="flex w-full items-center justify-between px-4 py-3 transition hover:bg-neutral-50"
       >
-        <span className={`text-sm font-bold ${toneClass.text}`}>
-          {toneClass.icon} {title}
+        <span className={`flex items-center gap-2 text-sm font-bold ${tc.text}`}>
+          <span className={`flex h-6 w-6 items-center justify-center rounded-full ${tc.iconBg} text-xs`}>
+            {tc.icon}
+          </span>
+          {title}
         </span>
-        <span className="text-neutral-400">{open ? '−' : '+'}</span>
+        <span className="text-neutral-400 text-sm">{open ? '▾' : '▸'}</span>
       </button>
       {open && (
         <ul className="border-t border-neutral-100 divide-y divide-neutral-100">
@@ -180,7 +181,7 @@ function Section({
             items.map((item) => (
               <li
                 key={item.id}
-                className="flex items-center justify-between gap-3 px-4 py-2"
+                className="flex items-center justify-between gap-3 px-4 py-2.5"
               >
                 <span className="truncate text-sm text-neutral-900">{item.name}</span>
                 <span className="font-mono text-xs text-neutral-700">
@@ -199,7 +200,22 @@ function Section({
 }
 
 const TONE_CLASSES = {
-  success: { text: 'text-success-500', icon: '✅' },
-  warning: { text: 'text-warning-500', icon: '⚠️' },
-  danger: { text: 'text-danger-500', icon: '❗' },
+  success: {
+    border: 'border-success-500',
+    text: 'text-success-500',
+    iconBg: 'bg-success-50',
+    icon: '✓',
+  },
+  warning: {
+    border: 'border-warning-500',
+    text: 'text-warning-500',
+    iconBg: 'bg-warning-50',
+    icon: '!',
+  },
+  danger: {
+    border: 'border-danger-500',
+    text: 'text-danger-500',
+    iconBg: 'bg-danger-50',
+    icon: '×',
+  },
 } as const;

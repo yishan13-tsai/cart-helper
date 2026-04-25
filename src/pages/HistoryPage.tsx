@@ -11,14 +11,16 @@ export function HistoryPage() {
   if (entries.length === 0) {
     return (
       <section className="flex h-full flex-col items-center justify-center p-8 text-center">
+        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-primary-50 text-4xl">
+          📋
+        </div>
         <h2 className="text-xl font-bold text-secondary-500">
           {t('history.empty.title')}
         </h2>
-        <p className="mt-2 text-sm text-neutral-700">{t('history.empty.subtitle')}</p>
-        <Link
-          to="/"
-          className="mt-6 rounded-lg bg-primary-500 px-6 py-3 text-sm font-bold text-neutral-0"
-        >
+        <p className="mt-2 max-w-xs text-sm text-neutral-700">
+          {t('history.empty.subtitle')}
+        </p>
+        <Link to="/" className="btn-primary mt-6 px-6 bg-primary-gradient shadow-hero">
           {t('history.empty.cta')}
         </Link>
       </section>
@@ -28,13 +30,10 @@ export function HistoryPage() {
   const groups = groupByDate(entries, i18n.language);
 
   return (
-    <section className="space-y-6 p-4 pb-8">
-      <h2 className="text-xl font-bold text-secondary-500">{t('nav.history')}</h2>
+    <section className="space-y-5 px-4 pb-24 pt-4">
       {groups.map((group) => (
         <div key={group.label} className="space-y-2">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-neutral-400">
-            {group.label}
-          </h3>
+          <h3 className="section-label px-1">{group.label}</h3>
           <ul className="space-y-2">
             {group.entries.map((entry) => (
               <HistoryRow key={entry.id} entry={entry} locale={i18n.language} />
@@ -61,17 +60,21 @@ function HistoryRow({ entry, locale }: { entry: HistoryEntry; locale: string }) 
     <li>
       <Link
         to={`/receipt/comparison/${entry.id}`}
-        className="block rounded-lg border border-neutral-100 bg-neutral-0 p-3"
+        className="card group block px-4 py-3 transition hover:shadow-card-hover active:scale-[0.99]"
       >
         <div className="flex items-center justify-between">
-          <span className="text-xs text-neutral-400">{time}</span>
+          <span className="text-2xs font-medium uppercase tracking-wide text-neutral-400">
+            {time}
+          </span>
           <span className="font-mono text-base font-bold text-secondary-500">
             {symbol}
             {total}
           </span>
         </div>
-        <div className="mt-1 flex items-center justify-between text-xs text-neutral-700">
-          <span>{t('cart.items_count', { n: itemCount })}</span>
+        <div className="mt-1.5 flex items-center justify-between text-xs">
+          <span className="text-neutral-700">
+            {t('cart.items_count', { n: itemCount })}
+          </span>
           {entry.comparison ? (
             <DiffBadge diff={diff ?? 0} symbol={symbol} locale={locale} />
           ) : (
@@ -94,12 +97,16 @@ function DiffBadge({
 }) {
   const { t } = useTranslation();
   if (Math.abs(diff) < 0.01) {
-    return <span className="text-success-500">{t('comparison.differenceMatch')}</span>;
+    return (
+      <span className="rounded-full bg-success-50 px-2 py-0.5 text-2xs font-bold text-success-500">
+        ✓ {t('comparison.differenceMatch')}
+      </span>
+    );
   }
   const sign = diff > 0 ? '+' : '−';
   const abs = formatNumber(Math.abs(diff), locale);
   return (
-    <span className="text-warning-500">
+    <span className="rounded-full bg-warning-50 px-2 py-0.5 text-2xs font-bold text-warning-500">
       {sign}
       {symbol}
       {abs}

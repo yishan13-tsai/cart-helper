@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { EnvBanner } from './components/EnvBanner';
 
 const NAV_ITEMS = [
-  { to: '/', labelKey: 'nav.camera' },
-  { to: '/cart', labelKey: 'nav.cart' },
-  { to: '/history', labelKey: 'nav.history' },
-  { to: '/settings', labelKey: 'nav.settings' },
+  { to: '/', labelKey: 'nav.camera', icon: '📷' },
+  { to: '/cart', labelKey: 'nav.cart', icon: '🛒' },
+  { to: '/history', labelKey: 'nav.history', icon: '📋' },
+  { to: '/settings', labelKey: 'nav.settings', icon: '⚙️' },
 ] as const;
 
 export function App() {
@@ -17,8 +17,8 @@ export function App() {
     <div className="flex h-full flex-col">
       <EnvBanner />
       {!isCamera && (
-        <header className="bg-secondary-500 text-neutral-0 px-4 py-3">
-          <h1 className="text-xl font-bold">{t('app.name')}</h1>
+        <header className="bg-primary-gradient px-4 py-4 text-neutral-0 shadow-hero">
+          <h1 className="text-xl font-bold tracking-tight">{t('app.name')}</h1>
         </header>
       )}
       <main className="flex-1 overflow-auto">
@@ -33,18 +33,27 @@ function BottomNav() {
   const { pathname } = useLocation();
   const { t } = useTranslation();
   return (
-    <nav className="bg-neutral-0 border-t border-neutral-100 flex">
+    <nav className="bg-neutral-0/95 flex border-t border-neutral-100 backdrop-blur shadow-nav">
       {NAV_ITEMS.map((item) => {
-        const active = pathname === item.to;
+        const active =
+          item.to === '/'
+            ? pathname === '/' || pathname.startsWith('/receipt/')
+            : pathname === item.to;
         return (
           <Link
             key={item.to}
             to={item.to}
-            className={`flex-1 py-3 text-center text-sm ${
-              active ? 'text-primary-500 font-bold' : 'text-neutral-700'
+            className={`relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-2xs transition ${
+              active ? 'text-primary-500' : 'text-neutral-400'
             }`}
           >
-            {t(item.labelKey)}
+            <span className="text-base" aria-hidden>
+              {item.icon}
+            </span>
+            <span className={active ? 'font-bold' : ''}>{t(item.labelKey)}</span>
+            {active && (
+              <span className="absolute top-0 h-0.5 w-8 rounded-b-full bg-primary-500" />
+            )}
           </Link>
         );
       })}
