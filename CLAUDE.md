@@ -117,5 +117,8 @@ NURIE.AI 2026 Cross-Platform Innovation Awards 參賽作品。
 - **TripGate 內嵌在 CameraPage**（2026-04-28）— 沒 active trip 時 `/scan` 不直接渲染相機，先 render `<TripGate>` 強制使用者開 trip。原本 HomePage 已刪，`/` 改 `<Navigate to="/scan" replace />`。底部 nav 第一格也從 Home 換成 History。理由：每張掃描的照片都該有歸屬 trip；hackathon 評分時 demo 才不會出現「孤兒商品」。
 - **Nav 顯示邏輯：camera 啟動才隱藏**（2026-04-28）— `App.tsx` 用 `tripActive = startedAt > 0 || items.length > 0`，只在 `/scan && tripActive` 與 `/receipt/*` 隱藏 nav。TripGate 出現時 nav 留著，使用者不會被困在 modal。
 
+### Features
+- **漲價警示用純前端 history 比對**（2026-04-29）— `src/lib/priceHistory.ts` + `usePriceTrend` hook 比對當前商品名 vs `useHistoryStore.entries`，case-insensitive 雙向子字串 match（"統一鮮乳" ↔ "統一鮮乳 936ml"），±5% 閾值。**沒用 LLM** 因為純子字串足以 demo；之後若要做更模糊的 match（"牛奶" ↔ "鮮乳"）再加 chat v2。Pill 出現在 CartPage `ItemCard`，alert-wash 漲 / success-wash 降。
+
 ## Agent team
 見 `.claude/agents/`：architect / frontend / api-integration / designer / i18n-locale / qa-design

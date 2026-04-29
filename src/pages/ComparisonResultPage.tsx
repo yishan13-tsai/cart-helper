@@ -1,11 +1,119 @@
-import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useHistoryStore } from '../store/history';
 import { useCartStore } from '../store/cart';
 import { currencySymbol, formatAmount } from '../lib/format';
-import { TIcon, type TIconName } from '../components/TIcon';
+import { RoundButton } from '../components/RoundButton';
+import { Pill } from '../components/Pill';
 import type { CartItem, ComparisonResult, Currency } from '../types';
+
+// ─── helpers ───────────────────────────────────────────────────────────────
+
+/** Format savedAt timestamp as MM/DD */
+function fmtDate(ts: number): string {
+  const d = new Date(ts);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${mm}/${dd}`;
+}
+
+// Status dot colors (matches design token names mapped to Tailwind classes)
+const DOT_CLASS: Record<'ok' | 'miss' | 'extra', string> = {
+  ok: 'bg-success',
+  miss: 'bg-warn',
+  extra: 'bg-chip-2',
+};
+
+// ─── item card ─────────────────────────────────────────────────────────────
+
+function ItemCard({
+  item,
+  status,
+  currency,
+  locale,
+}: {
+  item: CartItem;
+  status: 'ok' | 'miss' | 'extra';
+  currency: Currency;
+  locale: string;
+}) {
+  const sym = currencySymbol(currency);
+  const total =
+    item.unitPrice == null ? null : item.unitPrice * item.quantity;
+
+  return (
+    <div className="relative bg-white rounded-[14px] p-2">
+      {/* status dot — absolute top-right */}
+      <span
+        className={`absolute -top-[1px] -right-[1px] h-2 w-2 rounded-full border-[1.5px] border-bg ${DOT_CLASS[status]}`}
+      />
+      <p
+        className="text-[11.5px] font-bold text-ink leading-snug"
+        style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+      >
+        {item.name}
+      </p>
+      <div className="mt-1 flex items-center justify-between">
+        <span className="text-[10px] text-ink-60">×{item.quantity}</span>
+        <span className="font-num text-[12px] font-bold text-ink">
+          {sym}
+          {total == null ? '—' : formatAmount(total, locale)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── column ────────────────────────────────────────────────────────────────
+
+function Col({
+  sub,
+  title,
+  total,
+  items,
+  statusMap,
+  accent,
+  currency,
+  locale,
+}: {
+  sub: string;
+  title: string;
+  total: number;
+  items: CartItem[];
+  statusMap: Map<string, 'ok' | 'miss' | 'extra'>;
+  accent: 'border-page' | 'border-chip-2';
+  currency: Currency;
+  locale: string;
+}) {
+  const sym = currencySymbol(currency);
+
+  return (
+    <div className="flex flex-1 flex-col gap-2 min-w-0">
+      {/* column header card */}
+      <div className={`bg-white rounded-[18px] p-3 border-t-[3px] ${accent}`}>
+        <p className="text-[10px] font-bold text-ink-60 tracking-[0.04em] uppercase">{sub}</p>
+        <p className="mt-0.5 text-sm font-extrabold text-ink">{title}</p>
+        <p className="mt-1 font-num text-base font-extrabold text-ink">
+          <span className="text-[11px] opacity-60">{sym}</span>
+          {formatAmount(total, locale)}
+        </p>
+      </div>
+
+      {/* item cards */}
+      {items.map((item) => (
+        <ItemCard
+          key={item.id}
+          item={item}
+          status={statusMap.get(item.id) ?? 'ok'}
+          currency={currency}
+          locale={locale}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── page ──────────────────────────────────────────────────────────────────
 
 export function ComparisonResultPage() {
   const { id } = useParams<{ id: string }>();
@@ -17,212 +125,164 @@ export function ComparisonResultPage() {
   if (!entry || !entry.comparison) {
     return (
       <section className="flex h-full flex-col items-center justify-center p-8 text-center">
-        <h2 className="text-xl font-bold text-secondary-500">
+        <h2 className="text-xl font-bold text-ink-60">
           {t('history.notFound.title')}
         </h2>
-        <Link to="/cart" className="btn-primary mt-6 px-6">
+        <Link to="/cart" className="mt-6 px-6 py-2.5 rounded-full bg-page text-white font-bold text-sm">
           {t('history.notFound.cta')}
         </Link>
       </section>
     );
   }
 
-  const result = entry.comparison;
+  const result: ComparisonResult = entry.comparison;
   const currency = entry.cart.currency;
+  const locale = i18n.language;
+  const sym = currencySymbol(currency);
+
+  // Build status maps
+  const matchedIds = new Set(result.matched.map((i) => i.id));
+  const missingIds = new Set(result.missingFromReceipt.map((i) => i.id));
+
+  // Cart-side: all cart items (matched + missing)
+  const cartItems: CartItem[] = entry.cart.items;
+  const cartStatusMap = new Map<string, 'ok' | 'miss' | 'extra'>();
+  for (const item of cartItems) {
+    if (matchedIds.has(item.id)) cartStatusMap.set(item.id, 'ok');
+    else if (missingIds.has(item.id)) cartStatusMap.set(item.id, 'miss');
+    else cartStatusMap.set(item.id, 'ok'); // fallback
+  }
+
+  // Receipt-side: matched + extra (extras come from receipt, not cart)
+  const receiptItems: CartItem[] = [
+    ...result.matched,
+    ...result.extraOnReceipt,
+  ];
+  const receiptStatusMap = new Map<string, 'ok' | 'miss' | 'extra'>();
+  for (const item of result.matched) receiptStatusMap.set(item.id, 'ok');
+  for (const item of result.extraOnReceipt) receiptStatusMap.set(item.id, 'extra');
+
+  // Hero stats
+  const diff = result.difference;
+  const isMatch = Math.abs(diff) < 0.01;
+  const discrepancyCount =
+    result.missingFromReceipt.length + result.extraOnReceipt.length;
+  const diffTone = isMatch ? 'success' : diff > 0 ? 'alert' : 'warn';
+  const diffColorClass = isMatch
+    ? 'text-success'
+    : diff > 0
+      ? 'text-alert'
+      : 'text-warn';
+
+  const diffLabel = isMatch
+    ? t('comparison.differenceMatch')
+    : `${diff > 0 ? '+' : '−'}${sym}${formatAmount(Math.abs(diff), locale)}`;
+
+  // Store name + date subline
+  const storeName = entry.cart.store ?? t('history.entry.defaultStore');
+  const dateLabel = fmtDate(entry.savedAt);
+  const subLine = storeName ? `${storeName} · ${dateLabel}` : dateLabel;
+
   const onStartOver = () => {
     clearCart();
     navigate('/');
   };
 
   return (
-    <section className="flex min-h-full flex-col bg-neutral-50">
-      <SummaryHero result={result} currency={currency} locale={i18n.language} />
-      <div className="flex-1 space-y-3 px-4 pb-24 pt-2 animate-slide-up">
-        <Section
-          title={t('comparison.sections.matched', { n: result.matched.length })}
-          tone="success"
-          items={result.matched}
+    <div className="flex min-h-full flex-col bg-bg text-ink">
+      {/* ── header ── */}
+      <header className="flex items-center justify-between px-4 pt-4 pb-3">
+        <RoundButton icon="chevL" onClick={() => navigate(-1)} aria-label="back" />
+        <span className="text-[11px] font-extrabold tracking-[0.18em] text-ink-60 uppercase">
+          CART HELPER
+        </span>
+        <RoundButton icon="info" aria-label="info" />
+      </header>
+
+      {/* ── title block ── */}
+      <div className="px-6 pb-3 text-center">
+        <h1 className="text-2xl font-bold text-ink tracking-tight">
+          {t('comparison.title')}
+        </h1>
+        <p className="mt-0.5 text-[12px] text-ink-60">{subLine}</p>
+      </div>
+
+      {/* ── hero summary card ── */}
+      <div className="px-5 pb-3">
+        <div className="bg-surface rounded-3xl p-4">
+          {/* top row: diff + pill */}
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-[11px] font-semibold text-ink-60">{t('comparison.totalDiff' as any)}</p>
+              <p className={`font-num text-2xl font-extrabold tracking-tight ${diffColorClass}`}>
+                {diffLabel}
+              </p>
+            </div>
+            <Pill tone={diffTone}>
+              {discrepancyCount > 0 ? t('comparison.discrepancyCount' as any, { n: discrepancyCount }) : t('comparison.differenceMatch' as any)}
+            </Pill>
+          </div>
+
+          {/* bottom row: 4-column stats grid */}
+          <div className="grid grid-cols-4 gap-1.5">
+            {[
+              { key: 'matched', count: result.matched.length, colorClass: 'text-success' },
+              { key: 'priceDiff', count: 0, colorClass: 'text-alert' },
+              { key: 'missing', count: result.missingFromReceipt.length, colorClass: 'text-warn' },
+              { key: 'extra', count: result.extraOnReceipt.length, colorClass: 'text-chip-2' },
+            ].map(({ key, count, colorClass }) => (
+              <div
+                key={key}
+                className="bg-white rounded-[12px] py-2 px-1.5 text-center"
+              >
+                <p className={`font-num text-base font-extrabold ${colorClass}`}>{count}</p>
+                <p className={`text-[10px] font-bold ${colorClass}`}>{t(`comparison.counts.${key}` as any)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── side-by-side columns ── */}
+      <div className="flex gap-2 px-4 pb-6 animate-slide-up">
+        <Col
+          sub={t('comparison.cartSub' as any)}
+          title={t('comparison.cartLabel' as any)}
+          total={result.totalInCart}
+          items={cartItems}
+          statusMap={cartStatusMap}
+          accent="border-page"
           currency={currency}
-          locale={i18n.language}
-          emptyLabel={t('comparison.sectionEmpty')}
+          locale={locale}
         />
-        <Section
-          title={t('comparison.sections.missing', { n: result.missingFromReceipt.length })}
-          tone="warning"
-          items={result.missingFromReceipt}
+        <Col
+          sub={t('comparison.receiptSub' as any)}
+          title={t('comparison.receiptLabel' as any)}
+          total={result.totalOnReceipt}
+          items={receiptItems}
+          statusMap={receiptStatusMap}
+          accent="border-chip-2"
           currency={currency}
-          locale={i18n.language}
-          emptyLabel={t('comparison.sectionEmpty')}
-        />
-        <Section
-          title={t('comparison.sections.extra', { n: result.extraOnReceipt.length })}
-          tone="danger"
-          items={result.extraOnReceipt as CartItem[]}
-          currency={currency}
-          locale={i18n.language}
-          emptyLabel={t('comparison.sectionEmpty')}
+          locale={locale}
         />
       </div>
-      <div className="sticky bottom-0 z-10 flex gap-2 border-t border-neutral-100 bg-neutral-0/95 px-4 py-3 backdrop-blur shadow-nav">
-        <Link to="/cart" className="btn-secondary flex-1 text-center">
+
+      {/* ── sticky bottom bar ── */}
+      <div className="sticky bottom-0 z-10 flex gap-2 border-t border-ink-10 bg-bg/95 px-4 py-3 shadow-nav backdrop-blur">
+        <Link
+          to="/cart"
+          className="flex-1 text-center rounded-full border border-ink-10 bg-white py-2.5 text-sm font-bold text-ink"
+        >
           {t('comparison.backToCart')}
         </Link>
         <button
           type="button"
           onClick={onStartOver}
-          className="btn-primary flex-1 bg-primary-gradient shadow-hero"
+          className="flex-1 rounded-full bg-primary-gradient py-2.5 text-sm font-bold text-white shadow-hero"
         >
           {t('comparison.startOver')}
         </button>
       </div>
-    </section>
-  );
-}
-
-function SummaryHero({
-  result,
-  currency,
-  locale,
-}: {
-  result: ComparisonResult;
-  currency: Currency;
-  locale: string;
-}) {
-  const { t } = useTranslation();
-  const symbol = currencySymbol(currency);
-  const diff = result.difference;
-  const isMatch = Math.abs(diff) < 0.01;
-
-  return (
-    <div className="bg-hero-gradient px-4 pb-5 pt-5">
-      <p className="section-label mb-3 text-center">{t('comparison.title')}</p>
-
-      <div className="card mb-3 grid grid-cols-2 gap-1 px-4 py-3">
-        <div className="border-r border-neutral-100 pr-3 text-center">
-          <p className="text-2xs text-neutral-400">{t('comparison.cartTotal')}</p>
-          <p className="mt-1 font-mono text-xl font-bold text-secondary-500">
-            {symbol}
-            {formatAmount(result.totalInCart, locale)}
-          </p>
-        </div>
-        <div className="pl-3 text-center">
-          <p className="text-2xs text-neutral-400">{t('comparison.receiptTotal')}</p>
-          <p className="mt-1 font-mono text-xl font-bold text-secondary-500">
-            {symbol}
-            {formatAmount(result.totalOnReceipt, locale)}
-          </p>
-        </div>
-      </div>
-
-      <div
-        className={`rounded-2xl px-4 py-4 text-center shadow-card animate-pop-in ${
-          isMatch
-            ? 'bg-success-500 text-neutral-0'
-            : 'bg-accent-500 text-neutral-0'
-        }`}
-      >
-        <p className="text-2xs font-bold uppercase tracking-wider opacity-80">
-          {t('comparison.difference')}
-        </p>
-        <p className="mt-1 font-mono text-3xl font-bold">
-          {isMatch ? (
-            <span className="flex items-center gap-1.5 text-base">
-              {t('comparison.differenceMatch')}
-              <TIcon name="check" size={16} strokeWidth={2.4} />
-            </span>
-          ) : (
-            <>
-              {diff > 0 ? '+' : '−'}
-              {symbol}
-              {formatAmount(Math.abs(diff), locale)}
-            </>
-          )}
-        </p>
-      </div>
     </div>
   );
 }
-
-function Section({
-  title,
-  tone,
-  items,
-  currency,
-  locale,
-  emptyLabel,
-}: {
-  title: string;
-  tone: 'success' | 'warning' | 'danger';
-  items: CartItem[];
-  currency: Currency;
-  locale: string;
-  emptyLabel: string;
-}) {
-  const [open, setOpen] = useState(items.length > 0);
-  const symbol = currencySymbol(currency);
-  const tc = TONE_CLASSES[tone];
-
-  return (
-    <div className={`card overflow-hidden border-l-4 ${tc.border}`}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between px-4 py-3 transition hover:bg-neutral-50"
-      >
-        <span className={`flex items-center gap-2 text-sm font-bold ${tc.text}`}>
-          <span className={`flex h-6 w-6 items-center justify-center rounded-full ${tc.iconBg}`}>
-            <TIcon name={tc.icon} size={14} strokeWidth={2.4} />
-          </span>
-          {title}
-        </span>
-        <TIcon name="chev" size={16} className={`text-neutral-400 transition-transform ${open ? 'rotate-90' : ''}`} />
-      </button>
-      {open && (
-        <ul className="border-t border-neutral-100 divide-y divide-neutral-100">
-          {items.length === 0 ? (
-            <li className="px-4 py-3 text-sm text-neutral-400">{emptyLabel}</li>
-          ) : (
-            items.map((item) => (
-              <li
-                key={item.id}
-                className="flex items-center justify-between gap-3 px-4 py-2.5"
-              >
-                <span className="truncate text-sm text-neutral-900">{item.name}</span>
-                <span className="font-mono text-xs text-neutral-700">
-                  {symbol}
-                  {item.unitPrice == null
-                    ? '—'
-                    : formatAmount(item.unitPrice * item.quantity, locale)}
-                </span>
-              </li>
-            ))
-          )}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-const TONE_CLASSES: Record<
-  'success' | 'warning' | 'danger',
-  { border: string; text: string; iconBg: string; icon: TIconName }
-> = {
-  success: {
-    border: 'border-success',
-    text: 'text-success',
-    iconBg: 'bg-success-wash',
-    icon: 'check',
-  },
-  warning: {
-    border: 'border-warn',
-    text: 'text-warn',
-    iconBg: 'bg-warn-wash',
-    icon: 'info',
-  },
-  danger: {
-    border: 'border-alert',
-    text: 'text-alert',
-    iconBg: 'bg-alert-wash',
-    icon: 'x',
-  },
-};

@@ -124,8 +124,8 @@ export function CameraPage() {
     | 'common.currency.JPY'
     | 'common.currency.KRW');
 
-  // Mode label for top bar — TODO i18n
-  const modeLabel = mode === 'product' ? 'SCAN TAG' : 'SCAN RECEIPT';
+  // Mode label for top bar
+  const modeLabel = t(mode === 'product' ? 'camera.mode.label.product' : 'camera.mode.label.receipt');
 
   if (needsGate) {
     // No-op onStarted: starting the trip flips `startedAt`, so this component
@@ -266,6 +266,7 @@ function CartInfoCard({
   total: number;
   onClick: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <button
       type="button"
@@ -279,11 +280,9 @@ function CartInfoCard({
 
       {/* Label + count/total */}
       <div className="flex-1 min-w-0">
-        {/* TODO i18n */}
-        <div className="text-[11px] text-ink-60">已加入購物車</div>
+        <div className="text-[11px] text-ink-60">{t('camera.runningTotal.addedToCart')}</div>
         <div className="text-sm font-bold text-ink">
-          {/* TODO i18n unit */}
-          {count} 件&nbsp;&middot;&nbsp;
+          {t('cart.items_count', { n: count })}&nbsp;&middot;&nbsp;
           <span className="font-num">{symbol}&nbsp;{total.toLocaleString()}</span>
         </div>
       </div>

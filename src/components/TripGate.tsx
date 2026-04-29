@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCartStore } from '../store/cart';
 import { Btn } from './Btn';
 import { BagIllus } from './illustrations';
@@ -12,6 +13,7 @@ import { BagIllus } from './illustrations';
  * before any photo is taken — keeps history records clean.
  */
 export function TripGate({ onStarted }: { onStarted: () => void }) {
+  const { t } = useTranslation();
   const startTrip = useCartStore((s) => s.startTrip);
   const [storeName, setStoreName] = useState('');
 
@@ -31,15 +33,13 @@ export function TripGate({ onStarted }: { onStarted: () => void }) {
       <div className="mx-1 flex flex-1 flex-col items-center justify-center rounded-[28px] bg-surface px-5 py-10">
         <BagIllus size={180} />
         <p className="mt-4 text-center text-2xl font-bold leading-tight text-ink">
-          {/* TODO i18n */}
-          準備出發？<br />
-          按下開始記錄這次購物
+          {t('home.startTitle')}
         </p>
         <input
           type="text"
           value={storeName}
           onChange={(e) => setStoreName(e.target.value)}
-          placeholder="店家（選填）" /* TODO i18n */
+          placeholder={t('home.storePlaceholder')}
           className="mt-5 w-full rounded-full border border-ink/10 bg-white px-5 py-3 text-center text-sm font-medium text-ink placeholder:text-ink-30 focus:border-page focus:outline-none"
           onKeyDown={(e) => {
             if (e.key === 'Enter') handleStart();
@@ -47,7 +47,7 @@ export function TripGate({ onStarted }: { onStarted: () => void }) {
         />
         <div className="mt-3 w-full">
           <Btn icon="cart" onClick={handleStart}>
-            {/* TODO i18n */}開始購物
+            {t('home.startCta')}
           </Btn>
         </div>
       </div>

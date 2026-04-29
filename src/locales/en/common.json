@@ -15,7 +15,11 @@
   "camera": {
     "mode": {
       "product": "Items",
-      "receipt": "Receipt"
+      "receipt": "Receipt",
+      "label": {
+        "product": "Scan items",
+        "receipt": "Scan receipt"
+      }
     },
     "shutter": {
       "hint": "Aim and tap",
@@ -23,7 +27,8 @@
     },
     "title": "Camera",
     "runningTotal": {
-      "unit": "items"
+      "unit": "items",
+      "addedToCart": "Added to cart"
     },
     "permission": {
       "requesting": "Requesting camera access…",
@@ -64,7 +69,9 @@
     },
     "actions": {
       "continueScan": "Keep scanning",
-      "compareReceipt": "Compare receipt"
+      "compareReceipt": "Compare receipt",
+      "endTrip": "End shopping trip",
+      "endTripConfirm": "End this trip? Scanned items will be saved to history."
     },
     "pendingHeader": "Processing",
     "pending": {
@@ -72,6 +79,18 @@
       "subtitle": "Will appear in your cart when ready",
       "failed": "Recognition failed",
       "dismiss": "Dismiss"
+    },
+    "filters": {
+      "all": "All"
+    },
+    "budget": {
+      "label": "Budget {{symbol}}{{budget}}",
+      "over": "Over budget {{symbol}}{{overshoot}}",
+      "percent": "{{percent}}% of budget"
+    },
+    "priceTrend": {
+      "hike": "Last {{last}} ({{sign}}{{pct}}%)",
+      "drop": "Last {{last}} ({{sign}}{{pct}}%)"
     }
   },
   "receipt": {
@@ -79,11 +98,12 @@
       "title": "Scan receipt",
       "hint": "Fit the receipt in frame",
       "placeholder": "Tap the shutter when framed",
-      "empty": "Add items to your cart first"
+      "empty": "Add items to your cart first",
+      "align": "Align receipt corners"
     }
   },
   "comparison": {
-    "title": "Receipt comparison",
+    "title": "Comparison",
     "cartTotal": "Cart",
     "receiptTotal": "Receipt",
     "difference": "Difference",
@@ -95,7 +115,25 @@
     },
     "sectionEmpty": "None",
     "backToCart": "Back to cart",
-    "startOver": "Start a new run"
+    "startOver": "Start a new run",
+    "totalDiff": "Total difference",
+    "discrepancyCount": "{{n}} discrepancies",
+    "cartLabel": "Cart",
+    "cartSub": "Your cart",
+    "receiptLabel": "Receipt",
+    "receiptSub": "Receipt total",
+    "col": {
+      "cart": "Cart",
+      "receipt": "Receipt",
+      "cartSub": "Your cart",
+      "receiptSub": "Receipt total"
+    },
+    "counts": {
+      "matched": "Matched",
+      "priceDiff": "Price difference",
+      "missing": "Missing",
+      "extra": "Extra"
+    }
   },
   "history": {
     "empty": {
@@ -104,12 +142,22 @@
       "cta": "Start scanning"
     },
     "entry": {
-      "noComparison": "No comparison"
+      "noComparison": "No comparison",
+      "defaultStore": "Shopping record",
+      "diff": "Discrepancies",
+      "saved": "Saved"
     },
     "notFound": {
       "title": "Record not found",
       "cta": "Back to cart"
-    }
+    },
+    "dateLabel": {
+      "today": "Today",
+      "yesterday": "Yesterday"
+    },
+    "heroSavedThisMonth": "Saved this month",
+    "heroSubline": "{{tripCount}} trips · {{diffCount}} discrepancies",
+    "title": "Shopping history"
   },
   "ocr": {
     "confirm": {
@@ -146,14 +194,61 @@
     "clearHistory": {
       "label": "Clear history ({{n}})",
       "confirm": "Delete all {{n}} saved record(s)? This cannot be undone."
+    },
+    "scan": {
+      "label": "Scan preferences"
+    },
+    "budget": {
+      "label": "Shopping budget",
+      "sub": "Show alert when over 80% of budget",
+      "placeholder": "No limit"
+    },
+    "autoScan": {
+      "label": "Auto-continue scanning",
+      "sub": "Open next photo immediately after scan"
+    },
+    "shopping": {
+      "label": "Shopping"
+    },
+    "budgetAlert": {
+      "label": "Budget alert"
+    },
+    "about": {
+      "label": "About"
+    },
+    "guide": {
+      "label": "User guide"
+    },
+    "privacy": {
+      "label": "Privacy"
     }
   },
+  "home": {
+    "startCta": "Start shopping",
+    "startTitle": "Ready? Tap to start this shopping trip",
+    "storePlaceholder": "Store name (optional)"
+  },
+  "list": {
+    "title": "Shopping list",
+    "subtitle": "Coming soon — list items before you go, auto-checked as you scan."
+  },
   "common": {
+    "scan": "Scan",
+    "back": "Back",
+    "edit": "Edit",
+    "close": "Close",
+    "ok": "OK",
+    "cancel": "Cancel",
+    "calendar": "Calendar",
     "currency": {
       "TWD": "NT$",
       "USD": "$",
       "JPY": "¥",
       "KRW": "₩"
+    },
+    "unit": {
+      "item": "{{n}} items",
+      "itemUnit": "ea"
     }
   }
 }

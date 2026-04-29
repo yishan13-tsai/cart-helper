@@ -18,8 +18,10 @@ export default defineConfig(({ mode }) => {
           name: '血拼小幫手',
           short_name: '血拼',
           description: '拍照辨識商品、即時計算金額、拍收據對照差異',
-          theme_color: '#0E9F7E',
-          background_color: '#FFFFFF',
+          // Match Tailwind tomato theme: --ch-page (E84F2A) / --ch-bg (FFFAF5).
+          // Keep these in sync with src/index.css if the default theme changes.
+          theme_color: '#E84F2A',
+          background_color: '#FFFAF5',
           display: 'standalone',
           lang: 'zh-TW',
           start_url: '/',

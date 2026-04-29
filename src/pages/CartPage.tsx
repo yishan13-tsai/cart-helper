@@ -4,6 +4,7 @@ import { useCartStore, type PendingItem } from '../store/cart';
 import { useBaseCurrency } from '../hooks/useBaseCurrency';
 import { useFxPreview } from '../hooks/useFxPreview';
 import { useBudget, classifyBudget } from '../hooks/useBudget';
+import { usePriceTrend } from '../hooks/usePriceTrend';
 import { RoundButton } from '../components/RoundButton';
 import { Btn } from '../components/Btn';
 import { TIcon } from '../components/TIcon';
@@ -36,6 +37,8 @@ export function CartPage() {
   const updateItem = useCartStore((s) => s.updateItem);
   const pendingItems = useCartStore((s) => s.pendingItems);
   const removePending = useCartStore((s) => s.removePending);
+  const endTrip = useCartStore((s) => s.endTrip);
+  const startedAt = useCartStore((s) => s.startedAt);
 
   const [base] = useBaseCurrency();
   const fx = useFxPreview(total, currency, base);
@@ -52,11 +55,11 @@ export function CartPage() {
     <div className="relative flex min-h-full flex-col bg-bg">
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-4 pb-2">
-        <RoundButton icon="chevL" onClick={() => navigate(-1)} aria-label="返回" /> {/* TODO i18n: common.back */}
+        <RoundButton icon="chevL" onClick={() => navigate(-1)} aria-label={t('common.back')} />
         <span className="text-[11px] font-bold tracking-[4px] text-ink-60 uppercase">
           CART HELPER
         </span>
-        <RoundButton icon="edit" aria-label="編輯" /> {/* TODO i18n: common.edit */}
+        <RoundButton icon="edit" aria-label={t('common.edit')} />
       </div>
 
       {/* Title block */}
@@ -67,17 +70,15 @@ export function CartPage() {
         >
           {t('nav.cart')}
         </h1>
-        {/* TODO i18n: "件" unit */}
         <p className="text-2xs text-ink-60">
-          {totalCount} 件
+          {t('cart.items_count' as any, { n: totalCount })}
         </p>
       </div>
 
       {/* Filter chip row — v1: single "全部 N" active chip */}
       <div className="flex gap-2 overflow-x-auto px-5 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {/* TODO i18n: "全部" label */}
         <span className="whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-xs font-bold text-white">
-          全部 {items.length}
+          {t('cart.filters.all')} {items.length}
         </span>
       </div>
 
@@ -149,6 +150,23 @@ export function CartPage() {
         >
           {t('cart.actions.compareReceipt')}
         </Btn>
+
+        {/* End trip — only show when there's an active trip the user can close.
+            Confirms first because endTrip() archives the cart to history. */}
+        {(startedAt > 0 || items.length > 0) && (
+          <button
+            type="button"
+            onClick={() => {
+              const ok = window.confirm(t('cart.actions.endTripConfirm'));
+              if (!ok) return;
+              endTrip();
+              navigate('/');
+            }}
+            className="mt-2 w-full text-center text-2xs font-bold text-ink-60 underline-offset-2 hover:underline"
+          >
+            {t('cart.actions.endTrip')}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -253,10 +271,13 @@ function ItemCard({
   onRemove: () => void;
   onQuantityChange: (qty: number) => void;
 }) {
+  const { t } = useTranslation();
+  const trend = usePriceTrend(item);
+
   const pricePerUnit =
     item.unitPrice == null
       ? unknownPriceLabel
-      : `${symbol}${item.unitPrice.toLocaleString()}/件`; // TODO i18n: 件
+      : `${symbol}${item.unitPrice.toLocaleString()}/${t('common.unit.itemUnit', '件')}`;
 
   return (
     <div className="flex items-center gap-3 rounded-[18px] bg-white p-3 shadow-card">
@@ -277,6 +298,14 @@ function ItemCard({
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13px] font-bold text-ink">{item.name}</p>
         <p className="mt-0.5 text-[11px] text-ink-60">{pricePerUnit}</p>
+        {trend && trend.verdict !== 'flat' && (
+          <PriceTrendPill
+            symbol={symbol}
+            lastPrice={trend.trend.lastPrice}
+            deltaPct={trend.deltaPct}
+            verdict={trend.verdict}
+          />
+        )}
       </div>
 
       {/* Quantity stepper */}
@@ -292,6 +321,44 @@ function ItemCard({
         <TIcon name="trash" size={14} />
       </button>
     </div>
+  );
+}
+
+function PriceTrendPill({
+  symbol,
+  lastPrice,
+  deltaPct,
+  verdict,
+}: {
+  symbol: string;
+  lastPrice: number;
+  deltaPct: number;
+  verdict: 'hike' | 'drop';
+}) {
+  const { t } = useTranslation();
+  const sign = deltaPct > 0 ? '+' : '−';
+  const pct = Math.round(Math.abs(deltaPct) * 100);
+  const tone =
+    verdict === 'hike'
+      ? 'bg-alert-wash text-alert'
+      : 'bg-success-wash text-success';
+  const labelKey =
+    verdict === 'hike' ? 'cart.priceTrend.hike' : 'cart.priceTrend.drop';
+  return (
+    <span
+      className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold leading-none ${tone}`}
+      title={t(labelKey, {
+        last: `${symbol}${lastPrice.toLocaleString()}`,
+        sign,
+        pct,
+      })}
+    >
+      {t(labelKey, {
+        last: `${symbol}${lastPrice.toLocaleString()}`,
+        sign,
+        pct,
+      })}
+    </span>
   );
 }
 
@@ -372,6 +439,7 @@ function BudgetBar({
   symbol: string;
   state: ReturnType<typeof classifyBudget>;
 }) {
+  const { t } = useTranslation();
   const pct = Math.min(100, Math.round((total / budget) * 100));
   const overshoot = Math.max(0, total - budget);
   const barColor =
@@ -383,12 +451,12 @@ function BudgetBar({
     <div className="mb-3">
       <div className="flex items-center justify-between text-2xs">
         <span className="font-bold text-ink-60">
-          {/* TODO i18n */}預算 {symbol}{budget.toLocaleString()}
+          {t('cart.budget.label' as any, { symbol, budget: budget.toLocaleString() })}
         </span>
         <span className={`font-bold ${labelColor}`}>
           {state === 'over'
-            ? <>{/* TODO i18n */}超支 {symbol}{overshoot.toLocaleString()}</>
-            : `${pct}%`}
+            ? <>{t('cart.budget.over' as any, { symbol, overshoot: overshoot.toLocaleString() })}</>
+            : t('cart.budget.percent' as any, { percent: pct })}
         </span>
       </div>
       <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-ink-10">

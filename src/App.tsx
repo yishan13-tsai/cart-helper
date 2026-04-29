@@ -51,7 +51,7 @@ function BottomNav() {
         <button
           type="button"
           onClick={() => navigate('/scan')}
-          aria-label={/* TODO i18n */ '掃描'}
+          aria-label={t('common.scan')}
           className="flex h-16 w-16 items-center justify-center rounded-full bg-page text-white shadow-cta ring-4 ring-bg active:scale-95"
         >
           <TIcon name="scan" size={28} strokeWidth={2.2} />

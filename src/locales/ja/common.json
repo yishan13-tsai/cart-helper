@@ -15,7 +15,11 @@
   "camera": {
     "mode": {
       "product": "商品",
-      "receipt": "レシート"
+      "receipt": "レシート",
+      "label": {
+        "product": "商品スキャン",
+        "receipt": "レシートスキャン"
+      }
     },
     "shutter": {
       "hint": "商品を狙ってタップ",
@@ -23,7 +27,8 @@
     },
     "title": "カメラ",
     "runningTotal": {
-      "unit": "点"
+      "unit": "点",
+      "addedToCart": "カートに追加"
     },
     "permission": {
       "requesting": "カメラ権限をリクエスト中…",
@@ -64,7 +69,9 @@
     },
     "actions": {
       "continueScan": "続けて撮影",
-      "compareReceipt": "レシート照合"
+      "compareReceipt": "レシート照合",
+      "endTrip": "買い物を終了",
+      "endTripConfirm": "今回の買い物を終了しますか？スキャンした商品は履歴に保存されます。"
     },
     "pendingHeader": "処理中",
     "pending": {
@@ -72,18 +79,31 @@
       "subtitle": "完了するとカートに追加されます",
       "failed": "認識失敗",
       "dismiss": "削除"
+    },
+    "filters": {
+      "all": "すべて"
+    },
+    "budget": {
+      "label": "予算 {{symbol}}{{budget}}",
+      "over": "超過 {{symbol}}{{overshoot}}",
+      "percent": "予算の {{percent}}%"
+    },
+    "priceTrend": {
+      "hike": "前回 {{last}} ({{sign}}{{pct}}%)",
+      "drop": "前回 {{last}} ({{sign}}{{pct}}%)"
     }
   },
   "receipt": {
     "capture": {
-      "title": "レシートを撮影",
+      "title": "レシート撮影",
       "hint": "レシートをフレームに収める",
       "placeholder": "撮影後、自動で照合します",
-      "empty": "先に商品をカートに追加してください"
+      "empty": "先に商品をカートに追加してください",
+      "align": "レシート四隅を揃える"
     }
   },
   "comparison": {
-    "title": "レシート照合",
+    "title": "照合結果",
     "cartTotal": "カート",
     "receiptTotal": "レシート",
     "difference": "差額",
@@ -95,7 +115,25 @@
     },
     "sectionEmpty": "なし",
     "backToCart": "カートへ戻る",
-    "startOver": "新しく始める"
+    "startOver": "新しく始める",
+    "totalDiff": "合計差額",
+    "discrepancyCount": "{{n}}件の差異",
+    "cartLabel": "カート",
+    "cartSub": "スキャン済み",
+    "receiptLabel": "レシート",
+    "receiptSub": "お店のレシート",
+    "col": {
+      "cart": "カート",
+      "receipt": "レシート",
+      "cartSub": "スキャン済み",
+      "receiptSub": "お店のレシート"
+    },
+    "counts": {
+      "matched": "一致",
+      "priceDiff": "価格差",
+      "missing": "不足",
+      "extra": "超過"
+    }
   },
   "history": {
     "empty": {
@@ -104,12 +142,22 @@
       "cta": "スキャンを始める"
     },
     "entry": {
-      "noComparison": "未照合"
+      "noComparison": "未照合",
+      "defaultStore": "買い物記録",
+      "diff": "差異あり",
+      "saved": "節約済み"
     },
     "notFound": {
       "title": "履歴が見つかりません",
       "cta": "カートへ戻る"
-    }
+    },
+    "dateLabel": {
+      "today": "今日",
+      "yesterday": "昨日"
+    },
+    "heroSavedThisMonth": "今月の節約",
+    "heroSubline": "{{tripCount}}回 · {{diffCount}}件の差異",
+    "title": "買い物履歴"
   },
   "ocr": {
     "confirm": {
@@ -146,14 +194,61 @@
     "clearHistory": {
       "label": "履歴を削除する（{{n}}件）",
       "confirm": "{{n}}件の履歴を削除しますか？取り消しできません。"
+    },
+    "scan": {
+      "label": "スキャン設定"
+    },
+    "budget": {
+      "label": "買い物予算",
+      "sub": "予算の80%超過時にアラート表示",
+      "placeholder": "制限なし"
+    },
+    "autoScan": {
+      "label": "自動連続スキャン",
+      "sub": "スキャン後、次の写真を自動開始"
+    },
+    "shopping": {
+      "label": "買い物"
+    },
+    "budgetAlert": {
+      "label": "予算アラート"
+    },
+    "about": {
+      "label": "情報"
+    },
+    "guide": {
+      "label": "使用ガイド"
+    },
+    "privacy": {
+      "label": "プライバシー"
     }
   },
+  "home": {
+    "startCta": "買い物を開始",
+    "startTitle": "出発しますか？今回の買い物を記録します",
+    "storePlaceholder": "店舗名（任意）"
+  },
+  "list": {
+    "title": "買い物リスト",
+    "subtitle": "近日公開 — 出かける前にリストを作成、スキャンで自動チェック。"
+  },
   "common": {
+    "scan": "スキャン",
+    "back": "戻る",
+    "edit": "編集",
+    "close": "閉じる",
+    "ok": "OK",
+    "cancel": "キャンセル",
+    "calendar": "カレンダー",
     "currency": {
       "TWD": "NT$",
       "USD": "$",
       "JPY": "¥",
       "KRW": "₩"
+    },
+    "unit": {
+      "item": "{{n}}点",
+      "itemUnit": "点"
     }
   }
 }

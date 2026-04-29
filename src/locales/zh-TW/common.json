@@ -15,7 +15,11 @@
   "camera": {
     "mode": {
       "product": "商品",
-      "receipt": "收據"
+      "receipt": "收據",
+      "label": {
+        "product": "掃描標籤",
+        "receipt": "掃描收據"
+      }
     },
     "shutter": {
       "hint": "對準商品拍照",
@@ -23,7 +27,8 @@
     },
     "title": "相機",
     "runningTotal": {
-      "unit": "件"
+      "unit": "件",
+      "addedToCart": "已加入購物車"
     },
     "permission": {
       "requesting": "請求相機權限中…",
@@ -64,7 +69,9 @@
     },
     "actions": {
       "continueScan": "繼續拍",
-      "compareReceipt": "對收據"
+      "compareReceipt": "對收據",
+      "endTrip": "結束本次購物",
+      "endTripConfirm": "結束本次購物？已掃的商品會存到歷史紀錄。"
     },
     "pendingHeader": "辨識中",
     "pending": {
@@ -72,6 +79,18 @@
       "subtitle": "完成後會自動加入購物車",
       "failed": "辨識失敗",
       "dismiss": "移除"
+    },
+    "filters": {
+      "all": "全部"
+    },
+    "budget": {
+      "label": "預算 {{symbol}}{{budget}}",
+      "over": "超支 {{symbol}}{{overshoot}}",
+      "percent": "{{percent}}% 的預算"
+    },
+    "priceTrend": {
+      "hike": "上次 {{last}}（{{sign}}{{pct}}%）",
+      "drop": "上次 {{last}}（{{sign}}{{pct}}%）"
     }
   },
   "receipt": {
@@ -79,11 +98,12 @@
       "title": "掃描收據",
       "hint": "將收據放入框中",
       "placeholder": "對準收據後按快門",
-      "empty": "請先加入商品再對照"
+      "empty": "請先加入商品再對照",
+      "align": "對齊發票四角"
     }
   },
   "comparison": {
-    "title": "收據對照",
+    "title": "比對結果",
     "cartTotal": "購物車",
     "receiptTotal": "收據",
     "difference": "差異",
@@ -95,7 +115,25 @@
     },
     "sectionEmpty": "無",
     "backToCart": "回購物車",
-    "startOver": "開始新一輪"
+    "startOver": "開始新一輪",
+    "totalDiff": "總差額",
+    "discrepancyCount": "{{n}} 處差異",
+    "cartLabel": "購物車",
+    "cartSub": "自己掃的",
+    "receiptLabel": "發票",
+    "receiptSub": "店家結帳",
+    "col": {
+      "cart": "購物車",
+      "receipt": "發票",
+      "cartSub": "自己掃的",
+      "receiptSub": "店家結帳"
+    },
+    "counts": {
+      "matched": "相符",
+      "priceDiff": "價差",
+      "missing": "漏結",
+      "extra": "多結"
+    }
   },
   "history": {
     "empty": {
@@ -104,12 +142,22 @@
       "cta": "開始拍照"
     },
     "entry": {
-      "noComparison": "尚未對照"
+      "noComparison": "尚未對照",
+      "defaultStore": "購物紀錄",
+      "diff": "有差異",
+      "saved": "省錢"
     },
     "notFound": {
       "title": "找不到此紀錄",
       "cta": "回購物車"
-    }
+    },
+    "dateLabel": {
+      "today": "今天",
+      "yesterday": "昨天"
+    },
+    "heroSavedThisMonth": "本月省下",
+    "heroSubline": "本月 {{tripCount}} 趟 · {{diffCount}} 處差異",
+    "title": "歷史購物"
   },
   "ocr": {
     "confirm": {
@@ -146,14 +194,61 @@
     "clearHistory": {
       "label": "清空歷史紀錄（{{n}} 筆）",
       "confirm": "確定刪除 {{n}} 筆購物紀錄？此操作無法復原。"
+    },
+    "scan": {
+      "label": "掃描偏好"
+    },
+    "budget": {
+      "label": "本次購物預算",
+      "sub": "超過 80% 時購物車顯示提醒",
+      "placeholder": "不設限"
+    },
+    "autoScan": {
+      "label": "自動連續掃描",
+      "sub": "掃完一張立刻打開下一張"
+    },
+    "shopping": {
+      "label": "購物"
+    },
+    "budgetAlert": {
+      "label": "預算提醒"
+    },
+    "about": {
+      "label": "關於"
+    },
+    "guide": {
+      "label": "使用說明"
+    },
+    "privacy": {
+      "label": "隱私權"
     }
   },
+  "home": {
+    "startCta": "開始購物",
+    "startTitle": "準備出發？按下開始記錄這次購物",
+    "storePlaceholder": "店家（選填）"
+  },
+  "list": {
+    "title": "購物清單",
+    "subtitle": "即將推出 — 出門前先列要買的，掃到自動勾掉。"
+  },
   "common": {
+    "scan": "掃描",
+    "back": "返回",
+    "edit": "編輯",
+    "close": "關閉",
+    "ok": "確定",
+    "cancel": "取消",
+    "calendar": "月曆",
     "currency": {
       "TWD": "NT$",
       "USD": "$",
       "JPY": "¥",
       "KRW": "₩"
+    },
+    "unit": {
+      "item": "{{n}} 件",
+      "itemUnit": "件"
     }
   }
 }

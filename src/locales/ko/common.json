@@ -15,7 +15,11 @@
   "camera": {
     "mode": {
       "product": "상품",
-      "receipt": "영수증"
+      "receipt": "영수증",
+      "label": {
+        "product": "상품 스캔",
+        "receipt": "영수증 스캔"
+      }
     },
     "shutter": {
       "hint": "상품을 향해 탭",
@@ -23,7 +27,8 @@
     },
     "title": "카메라",
     "runningTotal": {
-      "unit": "개"
+      "unit": "개",
+      "addedToCart": "장바구니에 추가됨"
     },
     "permission": {
       "requesting": "카메라 권한을 요청 중입니다…",
@@ -64,7 +69,9 @@
     },
     "actions": {
       "continueScan": "계속 스캔",
-      "compareReceipt": "영수증 대조"
+      "compareReceipt": "영수증 대조",
+      "endTrip": "쇼핑 종료",
+      "endTripConfirm": "이번 쇼핑을 종료할까요? 스캔한 상품은 기록에 저장됩니다."
     },
     "pendingHeader": "처리 중",
     "pending": {
@@ -72,6 +79,18 @@
       "subtitle": "완료되면 장바구니에 자동 추가됩니다",
       "failed": "인식 실패",
       "dismiss": "제거"
+    },
+    "filters": {
+      "all": "전체"
+    },
+    "budget": {
+      "label": "예산 {{symbol}}{{budget}}",
+      "over": "초과 {{symbol}}{{overshoot}}",
+      "percent": "예산의 {{percent}}%"
+    },
+    "priceTrend": {
+      "hike": "지난번 {{last}} ({{sign}}{{pct}}%)",
+      "drop": "지난번 {{last}} ({{sign}}{{pct}}%)"
     }
   },
   "receipt": {
@@ -79,11 +98,12 @@
       "title": "영수증 스캔",
       "hint": "영수증을 프레임에 맞춰주세요",
       "placeholder": "촬영 후 자동 대조 시작",
-      "empty": "먼저 상품을 장바구니에 담아주세요"
+      "empty": "먼저 상품을 장바구니에 담아주세요",
+      "align": "영수증 모서리 정렬"
     }
   },
   "comparison": {
-    "title": "영수증 대조",
+    "title": "비교 결과",
     "cartTotal": "장바구니",
     "receiptTotal": "영수증",
     "difference": "차액",
@@ -95,7 +115,25 @@
     },
     "sectionEmpty": "없음",
     "backToCart": "장바구니로",
-    "startOver": "새로 시작"
+    "startOver": "새로 시작",
+    "totalDiff": "총 차액",
+    "discrepancyCount": "{{n}}개 차이",
+    "cartLabel": "장바구니",
+    "cartSub": "스캔한 것",
+    "receiptLabel": "영수증",
+    "receiptSub": "가게 영수증",
+    "col": {
+      "cart": "장바구니",
+      "receipt": "영수증",
+      "cartSub": "스캔한 것",
+      "receiptSub": "가게 영수증"
+    },
+    "counts": {
+      "matched": "일치",
+      "priceDiff": "가격 차이",
+      "missing": "없음",
+      "extra": "추가"
+    }
   },
   "history": {
     "empty": {
@@ -104,12 +142,22 @@
       "cta": "스캔 시작"
     },
     "entry": {
-      "noComparison": "대조 전"
+      "noComparison": "대조 전",
+      "defaultStore": "쇼핑 기록",
+      "diff": "차이 있음",
+      "saved": "절약됨"
     },
     "notFound": {
       "title": "기록을 찾을 수 없습니다",
       "cta": "장바구니로"
-    }
+    },
+    "dateLabel": {
+      "today": "오늘",
+      "yesterday": "어제"
+    },
+    "heroSavedThisMonth": "이번 달 절약",
+    "heroSubline": "{{tripCount}}회 · {{diffCount}}개 차이",
+    "title": "쇼핑 기록"
   },
   "ocr": {
     "confirm": {
@@ -146,14 +194,61 @@
     "clearHistory": {
       "label": "기록 삭제 ({{n}}건)",
       "confirm": "{{n}}건의 기록을 모두 삭제할까요? 되돌릴 수 없습니다."
+    },
+    "scan": {
+      "label": "스캔 설정"
+    },
+    "budget": {
+      "label": "쇼핑 예산",
+      "sub": "예산의 80% 이상일 때 알림 표시",
+      "placeholder": "제한 없음"
+    },
+    "autoScan": {
+      "label": "자동 연속 스캔",
+      "sub": "스캔 완료 후 다음 사진 자동 열기"
+    },
+    "shopping": {
+      "label": "쇼핑"
+    },
+    "budgetAlert": {
+      "label": "예산 알림"
+    },
+    "about": {
+      "label": "정보"
+    },
+    "guide": {
+      "label": "사용 설명서"
+    },
+    "privacy": {
+      "label": "개인정보 보호"
     }
   },
+  "home": {
+    "startCta": "쇼핑 시작",
+    "startTitle": "출발 준비? 탭해서 이번 쇼핑을 시작하세요",
+    "storePlaceholder": "매장명 (선택)"
+  },
+  "list": {
+    "title": "쇼핑 리스트",
+    "subtitle": "곧 출시 — 사기 전에 리스트를 만들고 스캔하면 자동 체크됩니다."
+  },
   "common": {
+    "scan": "스캔",
+    "back": "뒤로",
+    "edit": "편집",
+    "close": "닫기",
+    "ok": "확인",
+    "cancel": "취소",
+    "calendar": "달력",
     "currency": {
       "TWD": "NT$",
       "USD": "$",
       "JPY": "¥",
       "KRW": "₩"
+    },
+    "unit": {
+      "item": "{{n}}개",
+      "itemUnit": "개"
     }
   }
 }
