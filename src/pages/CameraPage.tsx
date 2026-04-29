@@ -8,7 +8,10 @@ import { TripGate } from '../components/TripGate';
 import { useCartStore } from '../store/cart';
 import { resolveRecognizer } from '../lib/recognizer';
 
-type Mode = 'product' | 'receipt';
+// CameraPage is product-scan only. Receipt comparison is reached via the
+// "Compare receipt" CTA on /cart → /receipt/capture; routing it through here
+// would force the user to snap twice (the captured blob can't survive a
+// route change).
 
 function uuid(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -55,7 +58,6 @@ async function makeThumbnailDataURL(blob: Blob): Promise<string> {
 export function CameraPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<Mode>('product');
   const [toast, setToast] = useState<string | null>(null);
 
   const items = useCartStore((s) => s.items);
@@ -79,14 +81,7 @@ export function CameraPage() {
   }, [toast]);
 
   async function handleCapture(blob: Blob) {
-    if (mode === 'receipt') {
-      // Receipt comparison stays synchronous — there's only one operation and
-      // it's the demo hero moment, so we want the user to see the result page.
-      navigate('/receipt/capture');
-      return;
-    }
-
-    // Product mode: fire-and-forget. Show pending placeholder in cart, return
+    // Fire-and-forget product OCR. Show pending placeholder in cart, return
     // to camera immediately for the next shot.
     const pendingId = uuid();
     let thumbnailUrl = '';
@@ -124,9 +119,6 @@ export function CameraPage() {
     | 'common.currency.JPY'
     | 'common.currency.KRW');
 
-  // Mode label for top bar
-  const modeLabel = t(mode === 'product' ? 'camera.mode.label.product' : 'camera.mode.label.receipt');
-
   if (needsGate) {
     // No-op onStarted: starting the trip flips `startedAt`, so this component
     // re-renders and naturally falls through to the camera view.
@@ -134,7 +126,7 @@ export function CameraPage() {
   }
 
   return (
-    <div className="relative flex h-full flex-col bg-neutral-900 overflow-hidden">
+    <div className="relative flex h-full flex-col bg-black overflow-hidden">
       {/* ── Top header (over camera, z-10) ───────────────────────── */}
       <div className="absolute inset-x-0 top-0 z-20 pt-safe">
         <div className="flex items-center justify-between px-[22px] py-3">
@@ -148,28 +140,18 @@ export function CameraPage() {
 
           {/* Mode label */}
           <div className="text-[11px] font-bold tracking-[4px] text-white/70 uppercase">
-            {modeLabel}
+            {t('camera.mode.label.product')}
           </div>
 
-          {/* Flash (product) / Grid (receipt) */}
+          {/* Flash (cosmetic) — pending count badge overlay */}
           <div className="relative">
-            <RoundButton
-              icon={mode === 'product' ? 'flash' : 'grid'}
-              tone="surface"
-              aria-label={mode === 'product' ? 'Flash' : 'Grid'}
-            />
-            {/* Pending count badge */}
+            <RoundButton icon="flash" tone="surface" aria-label="Flash" />
             {pendingCount > 0 && (
               <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-page/80 text-[9px] font-bold text-white">
                 {pendingCount}
               </span>
             )}
           </div>
-        </div>
-
-        {/* Mode toggle pill */}
-        <div className="flex justify-center pb-2">
-          <ModeToggle mode={mode} onChange={setMode} />
         </div>
       </div>
 
@@ -198,59 +180,6 @@ export function CameraPage() {
         </div>
       )}
     </div>
-  );
-}
-
-// ─── ModeToggle ─────────────────────────────────────────────────────────────
-function ModeToggle({
-  mode,
-  onChange,
-}: {
-  mode: Mode;
-  onChange: (m: Mode) => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <div
-      role="tablist"
-      className="flex gap-0 rounded-full bg-white p-1 shadow-sm"
-    >
-      <TabButton
-        active={mode === 'product'}
-        onClick={() => onChange('product')}
-        label={t('camera.mode.product')}
-      />
-      <TabButton
-        active={mode === 'receipt'}
-        onClick={() => onChange('receipt')}
-        label={t('camera.mode.receipt')}
-      />
-    </div>
-  );
-}
-
-function TabButton({
-  active,
-  onClick,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-}) {
-  return (
-    <button
-      role="tab"
-      aria-selected={active}
-      type="button"
-      onClick={onClick}
-      className={[
-        'rounded-full px-4 py-1.5 text-xs font-bold transition',
-        active ? 'bg-page text-white' : 'text-ink-60',
-      ].join(' ')}
-    >
-      {label}
-    </button>
   );
 }
 

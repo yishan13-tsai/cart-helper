@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useHistoryStore } from '../store/history';
 import { useCartStore } from '../store/cart';
 import { currencySymbol, formatAmount } from '../lib/format';
+import { namesMatch } from '../lib/priceHistory';
 import { RoundButton } from '../components/RoundButton';
 import { Pill } from '../components/Pill';
 import type { CartItem, ComparisonResult, Currency } from '../types';
@@ -140,20 +141,28 @@ export function ComparisonResultPage() {
   const locale = i18n.language;
   const sym = currencySymbol(currency);
 
-  // Build status maps
-  const matchedIds = new Set(result.matched.map((i) => i.id));
-  const missingIds = new Set(result.missingFromReceipt.map((i) => i.id));
-
-  // Cart-side: all cart items (matched + missing)
+  // Build status maps. The LLM returns matched/missing/extra arrays with
+  // freshly-minted ids (m-0, mi-0, e-0…), so we can't compare against
+  // entry.cart.items[].id directly — we match by normalized name instead.
   const cartItems: CartItem[] = entry.cart.items;
+  const matchedNames = result.matched.map((m) => m.name);
+  const missingNames = result.missingFromReceipt.map((m) => m.name);
+
   const cartStatusMap = new Map<string, 'ok' | 'miss' | 'extra'>();
   for (const item of cartItems) {
-    if (matchedIds.has(item.id)) cartStatusMap.set(item.id, 'ok');
-    else if (missingIds.has(item.id)) cartStatusMap.set(item.id, 'miss');
-    else cartStatusMap.set(item.id, 'ok'); // fallback
+    if (matchedNames.some((n) => namesMatch(n, item.name))) {
+      cartStatusMap.set(item.id, 'ok');
+    } else if (missingNames.some((n) => namesMatch(n, item.name))) {
+      cartStatusMap.set(item.id, 'miss');
+    } else {
+      // Item didn't appear in either list — treat as missing so the user
+      // notices, rather than silently flagging it OK.
+      cartStatusMap.set(item.id, 'miss');
+    }
   }
 
-  // Receipt-side: matched + extra (extras come from receipt, not cart)
+  // Receipt-side: matched + extra (extras come from receipt, not cart). LLM
+  // ids are unique within their array so id-keyed lookup works here.
   const receiptItems: CartItem[] = [
     ...result.matched,
     ...result.extraOnReceipt,

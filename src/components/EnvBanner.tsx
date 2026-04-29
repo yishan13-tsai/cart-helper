@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { TIcon } from './TIcon';
 
 interface HealthState {
   ok: boolean;
@@ -35,9 +36,12 @@ export function EnvBanner() {
   if (state.ok && state.hasApiKey) return null;
 
   return (
-    <div className="bg-danger-500 px-3 py-2 text-center text-xs leading-snug text-neutral-0">
-      ⚠️ Server is missing <strong>VAULTSAGE_API_KEY</strong>. Real OCR / receipt comparison
-      will fail. Set it in Render env vars and redeploy.
+    <div className="flex items-center justify-center gap-2 bg-alert px-3 py-2 text-center text-xs leading-snug text-white">
+      <TIcon name="info" size={14} strokeWidth={2.4} />
+      <span>
+        Server is missing <strong>VAULTSAGE_API_KEY</strong>. Real OCR / receipt comparison
+        will fail. Set it in Render env vars and redeploy.
+      </span>
     </div>
   );
 }

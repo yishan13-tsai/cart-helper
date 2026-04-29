@@ -39,43 +39,6 @@ export default {
           wash: 'rgb(var(--ch-warn-wash) / <alpha-value>)',
         },
 
-        // Legacy aliases — kept so older code still compiles during the staged
-        // migration. Remove once every page uses the new tokens above.
-        primary: {
-          50: 'rgb(var(--ch-surface) / <alpha-value>)',
-          100: 'rgb(var(--ch-surface) / <alpha-value>)',
-          500: 'rgb(var(--ch-page) / <alpha-value>)',
-          600: 'rgb(var(--ch-page) / <alpha-value>)',
-          700: 'rgb(var(--ch-page-dark) / <alpha-value>)',
-          800: 'rgb(var(--ch-page-dark) / <alpha-value>)',
-        },
-        secondary: {
-          50: 'rgb(var(--ch-surface) / <alpha-value>)',
-          500: 'rgb(var(--ch-ink) / <alpha-value>)',
-          700: 'rgb(var(--ch-ink) / <alpha-value>)',
-        },
-        accent: {
-          50: 'rgb(var(--ch-warn-wash) / <alpha-value>)',
-          500: 'rgb(var(--ch-chip1) / <alpha-value>)',
-        },
-        neutral: {
-          0: '#FFFFFF',
-          50: '#FBF7EF',
-          100: 'rgb(var(--ch-ink10) / <alpha-value>)',
-          200: 'rgb(var(--ch-ink10) / <alpha-value>)',
-          400: 'rgb(var(--ch-ink30) / <alpha-value>)',
-          700: 'rgb(var(--ch-ink60) / <alpha-value>)',
-          900: 'rgb(var(--ch-ink) / <alpha-value>)',
-        },
-        warning: {
-          50: 'rgb(var(--ch-warn-wash) / <alpha-value>)',
-          500: 'rgb(var(--ch-warn) / <alpha-value>)',
-        },
-        danger: {
-          50: 'rgb(var(--ch-alert-wash) / <alpha-value>)',
-          500: 'rgb(var(--ch-alert) / <alpha-value>)',
-        },
-        brand: { warm50: '#FFF6E6' },
       },
       fontFamily: {
         sans: [

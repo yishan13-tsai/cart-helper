@@ -26,8 +26,7 @@ export function findPriceTrend(
   currency: Currency,
   entries: HistoryEntry[],
 ): PriceTrend | null {
-  const needle = normalize(name);
-  if (!needle) return null;
+  if (!normalize(name)) return null;
 
   const occurrences: { price: number; seenAt: number }[] = [];
 
@@ -35,7 +34,7 @@ export function findPriceTrend(
     if (entry.cart.currency !== currency) continue;
     for (const item of entry.cart.items) {
       if (item.unitPrice == null || item.unitPrice <= 0) continue;
-      if (!matches(needle, normalize(item.name))) continue;
+      if (!namesMatch(name, item.name)) continue;
       occurrences.push({
         price: item.unitPrice,
         seenAt: entry.cart.startedAt ?? entry.savedAt,
@@ -61,20 +60,24 @@ export function findPriceTrend(
   };
 }
 
-function normalize(s: string): string {
+export function normalize(s: string): string {
   return s.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
 /**
- * Match if either name contains the other after normalization. We accept both
+ * Match if either name contains the other after normalization. Accepts both
  * directions so "統一鮮乳" (history) matches "統一鮮乳 936ml" (new) and vice
- * versa.
+ * versa. Exported because the receipt-comparison page needs to map cart
+ * items to LLM-returned matched/missing entries by name (no shared id).
  */
-function matches(a: string, b: string): boolean {
-  if (!a || !b) return false;
-  if (a === b) return true;
-  return a.includes(b) || b.includes(a);
+export function namesMatch(a: string, b: string): boolean {
+  const na = normalize(a);
+  const nb = normalize(b);
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+  return na.includes(nb) || nb.includes(na);
 }
+
 
 export type PriceVerdict = 'hike' | 'drop' | 'flat';
 

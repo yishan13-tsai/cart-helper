@@ -4,17 +4,17 @@ import { EnvBanner } from './components/EnvBanner';
 import { TIcon, type TIconName } from './components/TIcon';
 import { useCartStore } from './store/cart';
 
-// 5-tab nav with the middle slot reserved for an elevated SCAN action button.
+// 4-tab nav with the middle slot reserved for an elevated SCAN action button.
 // The middle is a *button*, not a link to a page — it triggers the scan flow.
+// (List tab removed — was a "Coming soon" placeholder that hurt demo flow.)
 type SideTab = {
   to: string;
-  labelKey: 'nav.history' | 'nav.list' | 'nav.cart' | 'nav.settings';
+  labelKey: 'nav.history' | 'nav.cart' | 'nav.settings';
   icon: TIconName;
 };
 
 const LEFT_TABS: ReadonlyArray<SideTab> = [
   { to: '/history', labelKey: 'nav.history', icon: 'history' },
-  { to: '/list', labelKey: 'nav.list', icon: 'list' },
 ];
 const RIGHT_TABS: ReadonlyArray<SideTab> = [
   { to: '/cart', labelKey: 'nav.cart', icon: 'cart' },
@@ -59,6 +59,12 @@ function BottomNav() {
       </div>
 
       <ul className="flex items-stretch">
+        {/* Phantom slot on the left so the layout stays symmetric (1 left
+            tab + middle spacer + 2 right tabs would otherwise push SCAN
+            off-center). Adjust if LEFT_TABS regains a 2nd item. */}
+        {LEFT_TABS.length < RIGHT_TABS.length && (
+          <li className="flex-1" aria-hidden />
+        )}
         {LEFT_TABS.map((tab) => (
           <NavTab key={tab.to} tab={tab} pathname={pathname} t={t} />
         ))}

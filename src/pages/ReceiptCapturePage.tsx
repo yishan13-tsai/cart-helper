@@ -5,27 +5,21 @@ import { CameraCapture } from '../components/CameraCapture';
 import { RoundButton } from '../components/RoundButton';
 import { TIcon } from '../components/TIcon';
 import { useCartStore } from '../store/cart';
-import { useHistoryStore } from '../store/history';
 import { runCompare } from '../lib/compareReceiptRunner';
 import { getLocaleForLLM } from '../i18n/llm-locale';
-import type { Currency, HistoryEntry } from '../types';
+import type { Currency } from '../types';
 
 export function ReceiptCapturePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const cart = useCartStore((s) => ({
-    id: s.id,
-    items: s.items,
-    currency: s.currency,
-    total: s.total,
-    updatedAt: s.updatedAt,
-  }));
-  const addEntry = useHistoryStore((s) => s.addEntry);
+  const cartId = useCartStore((s) => s.id);
+  const cartItems = useCartStore((s) => s.items);
+  const archiveWithComparison = useCartStore((s) => s.archiveWithComparison);
   const [phase, setPhase] = useState<'idle' | 'comparing' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
 
   async function handleCapture(blob: Blob) {
-    if (cart.items.length === 0) {
+    if (cartItems.length === 0) {
       setError(t('receipt.capture.empty'));
       return;
     }
@@ -35,18 +29,20 @@ export function ReceiptCapturePage() {
       const hint = getLocaleForLLM();
       const result = await runCompare(
         blob,
-        cart.items,
+        cartItems,
         { code: hint.code, name: hint.name, currency: hint.currency as Currency },
-        cart.id,
+        cartId,
       );
-      const entryId = uuid();
-      const entry: HistoryEntry = {
-        id: entryId,
-        cart,
-        comparison: result,
-        savedAt: Date.now(),
-      };
-      addEntry(entry);
+      // archiveWithComparison snapshots cart → history (using cart.id as
+      // entry id), attaches the comparison, then resets the cart so the
+      // user can start a fresh trip. Returns the archived id (= cart.id).
+      const entryId = archiveWithComparison(result);
+      if (!entryId) {
+        // Should be unreachable since we checked items above, but be defensive.
+        setError(t('receipt.capture.empty'));
+        setPhase('error');
+        return;
+      }
       navigate(`/receipt/comparison/${entryId}`);
     } catch (err) {
       // Surface full underlying error to DevTools so VS_NETWORK / VS_HTTP_4XX
@@ -59,7 +55,7 @@ export function ReceiptCapturePage() {
   }
 
   return (
-    <div className="relative flex h-full flex-col bg-neutral-900 overflow-hidden">
+    <div className="relative flex h-full flex-col bg-black overflow-hidden">
       {/* ── Top header (over camera, z-20) ───────────────────────── */}
       <div className="absolute inset-x-0 top-0 z-20 pt-safe">
         <div className="flex items-center justify-between px-[22px] py-3">
@@ -108,7 +104,7 @@ export function ReceiptCapturePage() {
 
       {/* ── Loading overlay ───────────────────────────────────────── */}
       {phase === 'comparing' && (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-neutral-900/85 text-white">
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/85 text-white">
           <div className="h-10 w-10 animate-spin rounded-full border-2 border-page border-t-transparent" />
           <p className="mt-4 text-sm font-bold">{t('loading.comparing')}</p>
         </div>
@@ -124,11 +120,4 @@ export function ReceiptCapturePage() {
       )}
     </div>
   );
-}
-
-function uuid(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
-  }
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }

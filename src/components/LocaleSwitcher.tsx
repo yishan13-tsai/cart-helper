@@ -20,10 +20,10 @@ export function LocaleSwitcher({ variant = 'buttons' }: Props) {
 
   if (variant === 'select') {
     return (
-      <label className="flex items-center gap-2 text-sm text-neutral-700">
+      <label className="flex items-center gap-2 text-sm text-ink-60">
         <span>{t('settings.locale.label')}</span>
         <select
-          className="rounded-md border border-neutral-100 bg-neutral-100 px-2 py-1 text-sm"
+          className="rounded-md border border-ink-10 bg-bg px-2 py-1 text-sm text-ink"
           value={current}
           onChange={(e) => pick(e.target.value as SupportedLocale)}
         >
@@ -53,8 +53,8 @@ export function LocaleSwitcher({ variant = 'buttons' }: Props) {
             aria-pressed={active}
             className={`rounded-full px-3.5 py-1.5 text-sm transition active:scale-95 ${
               active
-                ? 'bg-primary-gradient text-neutral-0 font-bold shadow-hero'
-                : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                ? 'bg-page text-white font-bold shadow-cta'
+                : 'bg-surface text-ink-60 hover:bg-ink-10'
             }`}
           >
             {LOCALE_LABELS[code]}

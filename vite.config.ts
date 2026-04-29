@@ -3,9 +3,13 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(({ mode }) => {
-  // Load all env vars (including unprefixed VAULTSAGE_API_KEY) for the dev proxy.
+  // Load all env vars for the dev proxy. We deliberately do NOT fall back to
+  // VITE_VAULTSAGE_API_KEY: anything Vite-prefixed gets inlined into the
+  // client bundle, which would leak the key. The BFF proxy (this file in dev,
+  // server/index.js in prod) injects the key server-side using an unprefixed
+  // VAULTSAGE_API_KEY, so the browser never sees it.
   const env = loadEnv(mode, process.cwd(), '');
-  const apiKey = env.VAULTSAGE_API_KEY ?? env.VITE_VAULTSAGE_API_KEY ?? '';
+  const apiKey = env.VAULTSAGE_API_KEY ?? '';
   const upstream = env.VAULTSAGE_BASE_URL ?? 'https://api.vaultsage.ai';
 
   return {

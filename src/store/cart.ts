@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { CartItem, Currency } from '../types';
+import type { CartItem, ComparisonResult, Currency } from '../types';
 import { useHistoryStore } from './history';
 
 export interface PendingItem {
@@ -36,6 +36,13 @@ interface CartState {
    * user explicitly "ends" the trip without immediately starting another.
    */
   endTrip: () => void;
+  /**
+   * Archive the current trip to history WITH a receipt-comparison attached,
+   * then reset the cart. Returns the history entry id so the caller can
+   * navigate to the comparison page. Reuses the trip's id as the history
+   * entry id so a single trip = single history row.
+   */
+  archiveWithComparison: (comparison: ComparisonResult) => string | null;
   setCurrency: (currency: Currency) => void;
   addPending: (entry: Omit<PendingItem, 'createdAt' | 'status'>) => void;
   removePending: (id: string) => void;
@@ -144,6 +151,35 @@ export const useCartStore = create<CartState>()(
           startedAt: 0,
           store: undefined,
         }));
+      },
+      archiveWithComparison: (comparison) => {
+        const state = get();
+        if (state.items.length === 0) return null;
+        useHistoryStore.getState().addEntry({
+          id: state.id,
+          cart: {
+            id: state.id,
+            items: state.items,
+            currency: state.currency,
+            total: state.total,
+            updatedAt: state.updatedAt,
+            startedAt: state.startedAt || undefined,
+            store: state.store,
+          },
+          comparison,
+          savedAt: Date.now(),
+        });
+        const archivedId = state.id;
+        set(() => ({
+          id: uuid(),
+          items: [],
+          total: 0,
+          updatedAt: Date.now(),
+          pendingItems: [],
+          startedAt: 0,
+          store: undefined,
+        }));
+        return archivedId;
       },
       setCurrency: (currency) =>
         set(() => ({ currency, updatedAt: Date.now() })),

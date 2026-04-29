@@ -108,7 +108,7 @@ export function CameraCapture({ onCapture, disabled, cropFraction = 0.70 }: Prop
   }
 
   return (
-    <div className="relative h-full w-full bg-neutral-900 text-neutral-0">
+    <div className="relative h-full w-full bg-black text-white">
       <video
         ref={videoRef}
         className="h-full w-full object-cover"
@@ -125,11 +125,11 @@ export function CameraCapture({ onCapture, disabled, cropFraction = 0.70 }: Prop
         <Overlay>
           <p className="mb-3 text-sm">{t('camera.permission.denied')}</p>
           {errorMsg && (
-            <p className="mb-3 text-2xs text-neutral-400">{errorMsg}</p>
+            <p className="mb-3 text-2xs text-white/60">{errorMsg}</p>
           )}
           <button
             type="button"
-            className="mb-2 rounded-lg bg-primary-500 px-4 py-2 text-sm font-bold text-neutral-0"
+            className="mb-2 rounded-full bg-page px-5 py-2 text-sm font-bold text-white shadow-cta"
             onClick={() => fileInputRef.current?.click()}
           >
             {t('camera.permission.cta')}
@@ -142,7 +142,7 @@ export function CameraCapture({ onCapture, disabled, cropFraction = 0.70 }: Prop
           <p className="mb-3 text-sm">{t('camera.unsupported')}</p>
           <button
             type="button"
-            className="rounded-lg bg-primary-500 px-4 py-2 text-sm font-bold text-neutral-0"
+            className="rounded-full bg-page px-5 py-2 text-sm font-bold text-white shadow-cta"
             onClick={() => fileInputRef.current?.click()}
           >
             {t('camera.permission.fallbackInput')}
@@ -152,13 +152,13 @@ export function CameraCapture({ onCapture, disabled, cropFraction = 0.70 }: Prop
 
       {status === 'streaming' && <FocusFrame />}
 
-      <div className="absolute inset-x-0 bottom-6 flex items-center justify-center">
+      <div className="absolute inset-x-0 bottom-24 flex items-center justify-center">
         <button
           type="button"
           aria-label={t('camera.shutter.aria')}
           onClick={handleShutter}
           disabled={status !== 'streaming' || disabled}
-          className="h-[72px] w-[72px] rounded-full border-4 border-neutral-0 bg-primary-500 shadow-lg transition active:scale-95 disabled:opacity-40"
+          className="h-[72px] w-[72px] rounded-full border-4 border-white bg-page shadow-cta transition active:scale-95 disabled:opacity-40"
         />
       </div>
 
@@ -180,7 +180,7 @@ function FocusFrame() {
     <div className="pointer-events-none absolute inset-0">
       {/* dim mask using clip-path: cuts a 70vmin square hole in the center */}
       <div
-        className="absolute inset-0 bg-neutral-900/55"
+        className="absolute inset-0 bg-black/55"
         style={{
           WebkitMaskImage:
             'radial-gradient(circle at center, transparent 0, transparent 0), linear-gradient(#fff,#fff)',
@@ -206,12 +206,12 @@ function FocusFrame() {
         }}
       >
         {/* corner brackets */}
-        <span className="absolute left-0 top-0 h-6 w-6 border-l-[3px] border-t-[3px] border-primary-500 rounded-tl-md" />
-        <span className="absolute right-0 top-0 h-6 w-6 border-r-[3px] border-t-[3px] border-primary-500 rounded-tr-md" />
-        <span className="absolute bottom-0 left-0 h-6 w-6 border-b-[3px] border-l-[3px] border-primary-500 rounded-bl-md" />
-        <span className="absolute bottom-0 right-0 h-6 w-6 border-b-[3px] border-r-[3px] border-primary-500 rounded-br-md" />
+        <span className="absolute left-0 top-0 h-6 w-6 border-l-[3px] border-t-[3px] border-page rounded-tl-md" />
+        <span className="absolute right-0 top-0 h-6 w-6 border-r-[3px] border-t-[3px] border-page rounded-tr-md" />
+        <span className="absolute bottom-0 left-0 h-6 w-6 border-b-[3px] border-l-[3px] border-page rounded-bl-md" />
+        <span className="absolute bottom-0 right-0 h-6 w-6 border-b-[3px] border-r-[3px] border-page rounded-br-md" />
         {/* subtle inner outline */}
-        <span className="absolute inset-0 rounded-2xl border border-neutral-0/30" />
+        <span className="absolute inset-0 rounded-2xl border border-white/30" />
       </div>
     </div>
   );
@@ -219,7 +219,7 @@ function FocusFrame() {
 
 function Overlay({ children }: { children: React.ReactNode }) {
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-900/85 p-6 text-center">
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 p-6 text-center text-white">
       {children}
     </div>
   );
