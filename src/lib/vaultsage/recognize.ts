@@ -33,6 +33,9 @@ export async function recognizeProducts(
   const { data } = await askJson(prompt, undefined, {
     schema: OcrPayloadSchema,
     contextualFileIds: [upload.file_id],
+    // One retry on transient timeout/network blip — VaultSage RAG mode can
+    // spike past 90s under load; persist:false means re-running is harmless.
+    retries: 1,
   });
 
   if (data.items.length === 0) {

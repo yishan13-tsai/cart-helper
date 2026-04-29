@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useHistoryStore } from '../store/history';
 import { useCartStore } from '../store/cart';
 import { currencySymbol, formatAmount } from '../lib/format';
+import { TIcon, type TIconName } from '../components/TIcon';
 import type { CartItem, ComparisonResult, Currency } from '../types';
 
 export function ComparisonResultPage() {
@@ -125,7 +126,10 @@ function SummaryHero({
         </p>
         <p className="mt-1 font-mono text-3xl font-bold">
           {isMatch ? (
-            <span className="text-base">{t('comparison.differenceMatch')} ✓</span>
+            <span className="flex items-center gap-1.5 text-base">
+              {t('comparison.differenceMatch')}
+              <TIcon name="check" size={16} strokeWidth={2.4} />
+            </span>
           ) : (
             <>
               {diff > 0 ? '+' : '−'}
@@ -166,12 +170,12 @@ function Section({
         className="flex w-full items-center justify-between px-4 py-3 transition hover:bg-neutral-50"
       >
         <span className={`flex items-center gap-2 text-sm font-bold ${tc.text}`}>
-          <span className={`flex h-6 w-6 items-center justify-center rounded-full ${tc.iconBg} text-xs`}>
-            {tc.icon}
+          <span className={`flex h-6 w-6 items-center justify-center rounded-full ${tc.iconBg}`}>
+            <TIcon name={tc.icon} size={14} strokeWidth={2.4} />
           </span>
           {title}
         </span>
-        <span className="text-neutral-400 text-sm">{open ? '▾' : '▸'}</span>
+        <TIcon name="chev" size={16} className={`text-neutral-400 transition-transform ${open ? 'rotate-90' : ''}`} />
       </button>
       {open && (
         <ul className="border-t border-neutral-100 divide-y divide-neutral-100">
@@ -199,23 +203,26 @@ function Section({
   );
 }
 
-const TONE_CLASSES = {
+const TONE_CLASSES: Record<
+  'success' | 'warning' | 'danger',
+  { border: string; text: string; iconBg: string; icon: TIconName }
+> = {
   success: {
-    border: 'border-success-500',
-    text: 'text-success-500',
-    iconBg: 'bg-success-50',
-    icon: '✓',
+    border: 'border-success',
+    text: 'text-success',
+    iconBg: 'bg-success-wash',
+    icon: 'check',
   },
   warning: {
-    border: 'border-warning-500',
-    text: 'text-warning-500',
-    iconBg: 'bg-warning-50',
-    icon: '!',
+    border: 'border-warn',
+    text: 'text-warn',
+    iconBg: 'bg-warn-wash',
+    icon: 'info',
   },
   danger: {
-    border: 'border-danger-500',
-    text: 'text-danger-500',
-    iconBg: 'bg-danger-50',
-    icon: '×',
+    border: 'border-alert',
+    text: 'text-alert',
+    iconBg: 'bg-alert-wash',
+    icon: 'x',
   },
-} as const;
+};

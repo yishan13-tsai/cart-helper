@@ -94,6 +94,28 @@ NURIE.AI 2026 Cross-Platform Innovation Awards 參賽作品。
 - 不放秘密到 git，用 `.env.local`
 - PR 前跑 `pnpm typecheck && pnpm test`
 - UI 改動要在瀏覽器實測（用 agent-browser）
+- **技術架構決策一律寫進本檔的「架構決策」章節**，不要散落在 commit message 或臨時筆記裡
+
+## 架構決策
+記錄關鍵技術選擇與其理由。新加的決策放最後並標日期。
+
+### 設計系統
+- **8 主題 token 系統**（2026-04-28）— 從 Claude Design handoff 落地，CSS vars 在 `src/index.css`、Tailwind 對應在 `tailwind.config.ts`。預設 `tomato`，由 `<html data-ch-theme>` 切換。新增主題只要加一組 CSS vars。
+- **Icon 一律用 SVG，不用 emoji**（2026-04-28）— 原因：emoji 跨平台/作業系統渲染不一致（iOS / Android / Windows / web fonts 差異大），且配色受系統強制（無法 `currentColor`）。**統一用 lucide-react** 經 `src/components/TIcon.tsx` 包裝，提供穩定的 design-handoff naming（`scan` / `cart` / `chev` 等）。新增 icon → 在 `TIcon.tsx` 加一筆 lucide 對應，**不要直接在頁面 import lucide**，保持單一改動點。
+  - 適用範圍：所有 UI（nav、按鈕、狀態標、空狀態、empty state、toast）
+  - 例外：locale JSON 檔內的字串可以用 emoji（純文字內容，不是裝飾）
+
+### API
+- **OCR 走 RAG mode**（2026-04-27）— `chat v2` 不帶 `file_ids` 而是 `contextual_file_ids`，因為 VaultSage chat-end vision 會幻覺，indexing-end summary 才準。代價：要先等 `pollProcessing(file_id, { waitFor: 'summary' })`（10–25s）。
+- **chat timeout 90s + 1 retry**（2026-04-28）— RAG 路徑慢，原 45s 常 timeout；BFF proxy 設 180s 給 retry headroom。
+
+### 資料模型 / 路由
+- **Trip metadata 整合進 cart store**（2026-04-28）— 沒拆 `useTripStore`，因為「同一時間最多一個 active trip」這個不變式很強。在 `useCartStore` 多 `startedAt` / `store` 兩個欄位 + `startTrip(store?)` / `endTrip()` action；結束 trip = 把 cart snapshot 推進 `useHistoryStore` 後重置。歷史 = `useHistoryStore.entries`。
+- **首次加品項自動 startTrip**（2026-04-28）— 使用者沒按「開始購物」也能直接掃；`addItem` 偵測 `startedAt === 0` 時自動補時間戳，避免強迫流程。
+- **路由：`/` = HomePage，`/scan` = CameraPage**（2026-04-28）— 原本 `/` 直接是相機，改後 Home 變 landing dashboard。底部 nav 5 格，中間是凸起 SCAN 圓鈕（`navigate('/scan')`），不是頁面 tab。`isFullscreen` 判斷 `/scan` 與 `/receipt/*` 時隱藏 nav。
+- **Budget 用獨立 hook（`useBudget`）而非 cart store**（2026-04-28）— 預算是 user setting 不是 trip data，存 `localStorage['app.tripBudget']`。`classifyBudget` 給 UI 三檔（ok / warning >80% / over >100%）。
+- **TripGate 內嵌在 CameraPage**（2026-04-28）— 沒 active trip 時 `/scan` 不直接渲染相機，先 render `<TripGate>` 強制使用者開 trip。原本 HomePage 已刪，`/` 改 `<Navigate to="/scan" replace />`。底部 nav 第一格也從 Home 換成 History。理由：每張掃描的照片都該有歸屬 trip；hackathon 評分時 demo 才不會出現「孤兒商品」。
+- **Nav 顯示邏輯：camera 啟動才隱藏**（2026-04-28）— `App.tsx` 用 `tripActive = startedAt > 0 || items.length > 0`，只在 `/scan && tripActive` 與 `/receipt/*` 隱藏 nav。TripGate 出現時 nav 留著，使用者不會被困在 modal。
 
 ## Agent team
 見 `.claude/agents/`：architect / frontend / api-integration / designer / i18n-locale / qa-design

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-Hant" data-ch-theme="tomato">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Cart Helper · 8 主題</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  html, body { margin: 0; padding: 0; background: #ECE4D6; font-family: "Noto Sans TC", system-ui; color: #1A1416; min-height: 100vh; }
+  *::-webkit-scrollbar { display: none; }
+  * { scrollbar-width: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="themes.js"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="themed-screens.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+function ThemeSwitcher({ theme, setTheme }) {
+  const themes = Object.values(window.CH_THEMES);
+  const t = window.CH_THEMES[theme];
+  return (
+    <div style={{
+      position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100,
+      background: '#fff', borderRadius: 999, padding: 6,
+      boxShadow: '0 12px 30px -10px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.05)',
+      display: 'flex', alignItems: 'center', gap: 4,
+    }}>
+      <div style={{ padding: '0 14px 0 12px', fontSize: 11, fontWeight: 800, letterSpacing: 2, color: '#7A6B72' }}>
+        THEME
+      </div>
+      {themes.map(th => {
+        const active = th.id === theme;
+        return (
+          <button key={th.id} onClick={() => setTheme(th.id)}
+            title={th.name + ' · ' + th.en}
+            style={{
+              border: 'none', cursor: 'pointer', padding: 0,
+              width: active ? 'auto' : 30, height: 30,
+              borderRadius: 999, background: active ? th.page : 'transparent',
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: active ? '0 12px 0 4px' : 0,
+              transition: 'all .2s',
+            }}>
+            <span style={{
+              width: 22, height: 22, borderRadius: 11, background: th.page,
+              border: `2px solid ${active ? '#fff' : th.surface}`, display: 'block',
+            }}/>
+            {active && (
+              <span style={{ fontSize: 12, fontWeight: 800, color: '#fff', whiteSpace: 'nowrap' }}>
+                {th.name}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ScreenCard({ label, children }) {
+  const Frame = window.IOSDevice;
+  // Native device is 402x874; scale to ~320 wide for the rail
+  const scale = 0.78;
+  const W = 402, H = 874;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+      <div style={{ width: W * scale, height: H * scale, position: 'relative' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+          <Frame>{children}</Frame>
+        </div>
+      </div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: '#7A6B72', letterSpacing: 1.5 }}>{label}</div>
+    </div>
+  );
+}
+
+function App() {
+  const [theme, setThemeRaw] = useState('tomato');
+  const setTheme = (id) => {
+    document.documentElement.dataset.chTheme = id;
+    setThemeRaw(id);
+  };
+  useEffect(() => { document.documentElement.dataset.chTheme = theme; }, []);
+
+  const t = window.CH_THEMES[theme];
+
+  // Apply theme bg to page
+  useEffect(() => {
+    document.body.style.background = `linear-gradient(180deg, ${t.surface}40 0%, #ECE4D6 100%)`;
+  }, [theme]);
+
+  const S = window.CH_Screens;
+  const screens = [
+    { l: '01 · Onboarding', C: S.S1_Onboarding },
+    { l: '02 · Home',       C: S.S2_Home },
+    { l: '03 · Scan Tag',   C: S.S3_Scan },
+    { l: '04 · Confirm',    C: S.S4_Confirm },
+    { l: '05 · Cart Edit',  C: S.S5_Cart },
+    { l: '06 · Receipt',    C: S.S6_ReceiptScan },
+    { l: '07 · Compare',    C: S.S7_Compare },
+    { l: '08 · Discrepancy',C: S.S8_Discrep },
+    { l: '09 · History',    C: S.S9_History },
+    { l: '10 · Settings',   C: S.S10_Settings },
+  ];
+
+  return (
+    <div style={{ paddingTop: 80, paddingBottom: 60 }}>
+      <ThemeSwitcher theme={theme} setTheme={setTheme}/>
+
+      <div style={{ maxWidth: 1500, margin: '0 auto', padding: '0 32px 32px' }}>
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 3, color: t.page, marginBottom: 6 }}>
+            CART HELPER · 8 THEMES
+          </div>
+          <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: -0.6 }}>
+            {t.name} <span style={{ color: '#9A8A7A', fontWeight: 600 }}>{t.en}</span>
+          </div>
+          <div style={{ fontSize: 13, color: '#5A4F44', marginTop: 6, maxWidth: 600 }}>
+            點上方主題切換，10 個畫面會即時換色。
+          </div>
+        </div>
+      </div>
+
+      <div style={{ overflowX: 'auto', padding: '0 32px 40px' }}>
+        <div style={{ display: 'flex', gap: 32, padding: '4px 0' }}>
+          {screens.map(s => (
+            <ScreenCard key={s.l} label={s.l}>
+              <s.C/>
+            </ScreenCard>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

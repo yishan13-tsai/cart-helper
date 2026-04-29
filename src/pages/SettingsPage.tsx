@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { LocaleSwitcher } from '../components/LocaleSwitcher';
 import { useBaseCurrency } from '../hooks/useBaseCurrency';
+import { useBudget } from '../hooks/useBudget';
 import { useCartStore } from '../store/cart';
 import { useHistoryStore } from '../store/history';
 import type { Currency } from '../types';
@@ -11,6 +12,7 @@ const APP_VERSION = '0.1.0';
 export function SettingsPage() {
   const { t, i18n } = useTranslation();
   const [base, setBase] = useBaseCurrency();
+  const [budget, setBudget] = useBudget();
   const clearCart = useCartStore((s) => s.clear);
   const cartItemCount = useCartStore((s) => s.items.length);
   const clearHistory = useHistoryStore((s) => s.clear);
@@ -40,6 +42,29 @@ export function SettingsPage() {
       <div className="card p-4">
         <p className="section-label mb-3">{t('settings.locale.label')}</p>
         <LocaleSwitcher />
+      </div>
+
+      {/* Trip budget */}
+      <div className="card p-4">
+        <label htmlFor="trip-budget" className="section-label mb-3 block">
+          {/* TODO i18n */}本次購物預算
+        </label>
+        <input
+          id="trip-budget"
+          type="number"
+          inputMode="numeric"
+          min={0}
+          value={budget ?? ''}
+          onChange={(e) => {
+            const v = e.target.value.trim();
+            setBudget(v === '' ? null : Number(v));
+          }}
+          placeholder={/* TODO i18n */ '不設限'}
+          className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-base font-medium text-neutral-900 focus:border-primary-500 focus:bg-neutral-0 focus:outline-none focus:ring-2 focus:ring-primary-100"
+        />
+        <p className="mt-2 text-xs text-neutral-400">
+          {/* TODO i18n */}超過 80% 會在購物車提醒；超過時顯示警告色。
+        </p>
       </div>
 
       {/* Currency */}

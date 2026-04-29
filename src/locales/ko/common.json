@@ -7,7 +7,10 @@
     "camera": "스캔",
     "cart": "장바구니",
     "history": "기록",
-    "settings": "설정"
+    "settings": "설정",
+    "home": "홈",
+    "list": "리스트",
+    "more": "더보기"
   },
   "camera": {
     "mode": {

@@ -31,6 +31,7 @@ export async function compareReceipt(
   const { data } = await askJson(prompt, undefined, {
     schema: ReceiptComparisonSchema,
     contextualFileIds: [upload.file_id],
+    retries: 1,
   });
 
   const receipt: Receipt = {

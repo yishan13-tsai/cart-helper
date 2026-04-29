@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useHistoryStore } from '../store/history';
 import { currencySymbol } from '../lib/format';
+import { TIcon } from '../components/TIcon';
 import type { HistoryEntry } from '../types';
 
 export function HistoryPage() {
@@ -11,8 +12,8 @@ export function HistoryPage() {
   if (entries.length === 0) {
     return (
       <section className="flex h-full flex-col items-center justify-center p-8 text-center">
-        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-primary-50 text-4xl">
-          📋
+        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-surface text-page">
+          <TIcon name="history" size={36} strokeWidth={1.6} />
         </div>
         <h2 className="text-xl font-bold text-secondary-500">
           {t('history.empty.title')}
@@ -98,8 +99,9 @@ function DiffBadge({
   const { t } = useTranslation();
   if (Math.abs(diff) < 0.01) {
     return (
-      <span className="rounded-full bg-success-50 px-2 py-0.5 text-2xs font-bold text-success-500">
-        ✓ {t('comparison.differenceMatch')}
+      <span className="inline-flex items-center gap-1 rounded-full bg-success-wash px-2 py-0.5 text-2xs font-bold text-success">
+        <TIcon name="check" size={12} strokeWidth={2.6} />
+        {t('comparison.differenceMatch')}
       </span>
     );
   }

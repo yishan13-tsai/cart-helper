@@ -7,7 +7,10 @@
     "camera": "スキャン",
     "cart": "カート",
     "history": "履歴",
-    "settings": "設定"
+    "settings": "設定",
+    "home": "ホーム",
+    "list": "リスト",
+    "more": "その他"
   },
   "camera": {
     "mode": {

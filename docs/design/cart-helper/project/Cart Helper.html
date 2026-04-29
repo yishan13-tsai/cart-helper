@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Cart Helper · 購物小幫手</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  html, body { margin: 0; padding: 0; background: #EFE7DA; font-family: "Noto Sans TC", -apple-system, system-ui, sans-serif; }
+  *::-webkit-scrollbar { display: none; }
+  * { scrollbar-width: none; }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="tokens.js"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="screens-1.jsx"></script>
+<script type="text/babel" src="screens-2.jsx"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { DesignCanvas, DCSection, DCArtboard } = window;
+const {
+  IOSDevice,
+  ScreenOnboarding, ScreenHome, ScreenScan, ScreenConfirm, ScreenCart,
+  ScreenReceiptScan, ScreenCompare, ScreenDiscrepancy, ScreenHistory, ScreenSettings,
+} = window;
+
+const phone = (Screen, dark = false) => (
+  <IOSDevice dark={dark}>
+    <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+      <Screen/>
+    </div>
+  </IOSDevice>
+);
+
+function App() {
+  return (
+    <DesignCanvas
+      title="Cart Helper · 購物小幫手"
+      subtitle="iPhone PWA · 繁體中文 · 暖色柔和風格"
+    >
+      <DCSection id="flow" title="主要流程  ·  Onboarding → Scan → Cart → Receipt → Compare">
+        <DCArtboard id="s1" label="01  歡迎引導" width={402} height={874}>{phone(ScreenOnboarding)}</DCArtboard>
+        <DCArtboard id="s2" label="02  購物車總覽" width={402} height={874}>{phone(ScreenHome)}</DCArtboard>
+        <DCArtboard id="s3" label="03  掃描標籤" width={402} height={874}>{phone(ScreenScan, true)}</DCArtboard>
+        <DCArtboard id="s4" label="04  掃描成功" width={402} height={874}>{phone(ScreenConfirm)}</DCArtboard>
+        <DCArtboard id="s5" label="05  購物車編輯" width={402} height={874}>{phone(ScreenCart)}</DCArtboard>
+      </DCSection>
+
+      <DCSection id="reconcile" title="比對與差異  ·  Receipt → Side-by-side → Resolve">
+        <DCArtboard id="s6" label="06  掃描發票" width={402} height={874}>{phone(ScreenReceiptScan, true)}</DCArtboard>
+        <DCArtboard id="s7" label="07  並排比對" width={402} height={874}>{phone(ScreenCompare)}</DCArtboard>
+        <DCArtboard id="s8" label="08  處理差異" width={402} height={874}>{phone(ScreenDiscrepancy)}</DCArtboard>
+      </DCSection>
+
+      <DCSection id="account" title="紀錄與設定">
+        <DCArtboard id="s9" label="09  歷史紀錄" width={402} height={874}>{phone(ScreenHistory)}</DCArtboard>
+        <DCArtboard id="s10" label="10  設定" width={402} height={874}>{phone(ScreenSettings)}</DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

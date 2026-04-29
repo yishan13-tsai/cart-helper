@@ -7,6 +7,8 @@ export interface CartItem {
   quantity: number;
   currency: Currency;
   sourceFileId?: string;
+  /** Small (~96px) data URL of the captured photo, persisted in localStorage. */
+  thumbnailUrl?: string;
   confidence?: number;
   createdAt: number;
 }
@@ -17,6 +19,10 @@ export interface Cart {
   currency: Currency;
   total: number;
   updatedAt: number;
+  /** Trip start timestamp — when user pressed "開始購物". */
+  startedAt?: number;
+  /** Optional store name user typed when starting the trip. */
+  store?: string;
 }
 
 export interface Receipt {

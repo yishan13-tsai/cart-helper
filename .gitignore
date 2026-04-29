@@ -33,3 +33,9 @@ coverage
 dev-dist
 sw.js
 workbox-*.js
+
+# skills CLI artifacts (per-machine; install via `npx skills add ...`)
+.agents/
+.claude/skills/
+.factory/
+skills-lock.json

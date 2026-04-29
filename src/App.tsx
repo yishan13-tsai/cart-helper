@@ -1,30 +1,40 @@
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { EnvBanner } from './components/EnvBanner';
+import { TIcon, type TIconName } from './components/TIcon';
+import { useCartStore } from './store/cart';
 
-const NAV_ITEMS = [
-  { to: '/', labelKey: 'nav.camera', icon: '📷' },
-  { to: '/cart', labelKey: 'nav.cart', icon: '🛒' },
-  { to: '/history', labelKey: 'nav.history', icon: '📋' },
-  { to: '/settings', labelKey: 'nav.settings', icon: '⚙️' },
-] as const;
+// 5-tab nav with the middle slot reserved for an elevated SCAN action button.
+// The middle is a *button*, not a link to a page — it triggers the scan flow.
+type SideTab = {
+  to: string;
+  labelKey: 'nav.history' | 'nav.list' | 'nav.cart' | 'nav.settings';
+  icon: TIconName;
+};
+
+const LEFT_TABS: ReadonlyArray<SideTab> = [
+  { to: '/history', labelKey: 'nav.history', icon: 'history' },
+  { to: '/list', labelKey: 'nav.list', icon: 'list' },
+];
+const RIGHT_TABS: ReadonlyArray<SideTab> = [
+  { to: '/cart', labelKey: 'nav.cart', icon: 'cart' },
+  { to: '/settings', labelKey: 'nav.settings', icon: 'gear' },
+];
 
 export function App() {
   const { pathname } = useLocation();
-  const { t } = useTranslation();
-  const isCamera = pathname === '/' || pathname.startsWith('/receipt/');
+  const tripActive = useCartStore((s) => s.startedAt > 0 || s.items.length > 0);
+  // Hide nav only when the camera UI is actually live. The TripGate uses /scan
+  // too but should keep the nav so users aren't trapped.
+  const isFullscreen =
+    (pathname === '/scan' && tripActive) || pathname.startsWith('/receipt/');
   return (
     <div className="flex h-full flex-col">
       <EnvBanner />
-      {!isCamera && (
-        <header className="bg-primary-gradient px-4 py-4 text-neutral-0 shadow-hero">
-          <h1 className="text-xl font-bold tracking-tight">{t('app.name')}</h1>
-        </header>
-      )}
       <main className="flex-1 overflow-auto">
         <Outlet />
       </main>
-      <BottomNav />
+      {!isFullscreen && <BottomNav />}
     </div>
   );
 }
@@ -32,31 +42,60 @@ export function App() {
 function BottomNav() {
   const { pathname } = useLocation();
   const { t } = useTranslation();
+  const navigate = useNavigate();
+
   return (
-    <nav className="bg-neutral-0/95 flex border-t border-neutral-100 backdrop-blur shadow-nav">
-      {NAV_ITEMS.map((item) => {
-        const active =
-          item.to === '/'
-            ? pathname === '/' || pathname.startsWith('/receipt/')
-            : pathname === item.to;
-        return (
-          <Link
-            key={item.to}
-            to={item.to}
-            className={`relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-2xs transition ${
-              active ? 'text-primary-500' : 'text-neutral-400'
-            }`}
-          >
-            <span className="text-base" aria-hidden>
-              {item.icon}
-            </span>
-            <span className={active ? 'font-bold' : ''}>{t(item.labelKey)}</span>
-            {active && (
-              <span className="absolute top-0 h-0.5 w-8 rounded-b-full bg-primary-500" />
-            )}
-          </Link>
-        );
-      })}
+    <nav className="relative shrink-0 bg-white/95 backdrop-blur shadow-nav">
+      {/* Notch carve-out for the elevated middle button */}
+      <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
+        <button
+          type="button"
+          onClick={() => navigate('/scan')}
+          aria-label={/* TODO i18n */ '掃描'}
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-page text-white shadow-cta ring-4 ring-bg active:scale-95"
+        >
+          <TIcon name="scan" size={28} strokeWidth={2.2} />
+        </button>
+      </div>
+
+      <ul className="flex items-stretch">
+        {LEFT_TABS.map((tab) => (
+          <NavTab key={tab.to} tab={tab} pathname={pathname} t={t} />
+        ))}
+        {/* spacer for the elevated button */}
+        <li className="flex-1" aria-hidden />
+        {RIGHT_TABS.map((tab) => (
+          <NavTab key={tab.to} tab={tab} pathname={pathname} t={t} />
+        ))}
+      </ul>
     </nav>
+  );
+}
+
+function NavTab({
+  tab,
+  pathname,
+  t,
+}: {
+  tab: SideTab;
+  pathname: string;
+  t: ReturnType<typeof useTranslation>['t'];
+}) {
+  const active = pathname === tab.to;
+  return (
+    <li className="flex-1">
+      <Link
+        to={tab.to}
+        className={`relative flex flex-col items-center gap-0.5 py-2.5 text-[10px] transition ${
+          active ? 'text-page font-bold' : 'text-ink-30'
+        }`}
+      >
+        <TIcon name={tab.icon} size={20} strokeWidth={active ? 2.2 : 1.8} />
+        <span>{t(tab.labelKey)}</span>
+        {active && (
+          <span className="absolute top-0 h-0.5 w-8 rounded-b-full bg-page" />
+        )}
+      </Link>
+    </li>
   );
 }

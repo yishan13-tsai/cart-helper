@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Cart Helper · 配色推薦</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  html, body { margin: 0; padding: 0; background: #F0EAE0; font-family: "Noto Sans TC", -apple-system, system-ui, sans-serif; color: #1A1416; }
+  *::-webkit-scrollbar { display: none; }
+  * { scrollbar-width: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel">
+const palettes = [
+  {
+    id: 'A0',
+    name: '緋紅 Crimson',
+    note: '參考圖原色 · 強烈、自信、有食慾感',
+    bg: '#FFFFFF',
+    page: '#C73E5A',
+    pageDark: '#A02942',
+    cream: '#FBEFE5',
+    chip1: '#F7A23B', chip2: '#7BC97A',
+    tag: '經典款',
+  },
+  {
+    id: 'A1',
+    name: '番茄紅 Tomato',
+    note: '更橘、更暖、像剛熟的番茄，超市感最強',
+    bg: '#FFFAF5',
+    page: '#E84F2A',
+    pageDark: '#B83A1C',
+    cream: '#FFE9D8',
+    chip1: '#FFB347', chip2: '#7BC97A',
+    tag: '推薦',
+  },
+  {
+    id: 'A2',
+    name: '楓糖橘 Maple',
+    note: '飽和橘 + 米色 · 像和菓子和糖果，溫柔可愛',
+    bg: '#FFF7EC',
+    page: '#E07A1F',
+    pageDark: '#B05E12',
+    cream: '#FCE9CD',
+    chip1: '#F4B53F', chip2: '#9CC579',
+  },
+  {
+    id: 'A3',
+    name: '胭脂粉 Rouge',
+    note: '較粉的酒紅，搭奶白 · 更女性、精緻、生活感',
+    bg: '#FFFAF7',
+    page: '#D14D6E',
+    pageDark: '#A4364F',
+    cream: '#FBE5E8',
+    chip1: '#F0A0A8', chip2: '#A8C99A',
+  },
+  {
+    id: 'A4',
+    name: '酒紅 Bordeaux',
+    note: '深紅 + 米杏 · 內斂、像紅酒和皮革，沈穩有質感',
+    bg: '#FBF6EE',
+    page: '#8E2A3A',
+    pageDark: '#6A1E2A',
+    cream: '#F0E4D2',
+    chip1: '#D9A05B', chip2: '#7B9F70',
+  },
+  {
+    id: 'A5',
+    name: '抹茶綠 Matcha',
+    note: '飽和綠 + 米色 · 健康、生鮮、有機超市感',
+    bg: '#FBF7EC',
+    page: '#3F8E5C',
+    pageDark: '#2C6B43',
+    cream: '#EDE2C8',
+    chip1: '#F4B53F', chip2: '#E07A4D',
+  },
+  {
+    id: 'A6',
+    name: '深藍橘 Navy & Persimmon',
+    note: '深海軍藍 + 柿子橘 · 撞色、有設計師感、辨識度高',
+    bg: '#FFF8EE',
+    page: '#1F3A5F',
+    pageDark: '#142844',
+    cream: '#FFE3CB',
+    chip1: '#F26E3F', chip2: '#F4B53F',
+    accent: '#F26E3F',
+  },
+  {
+    id: 'A7',
+    name: '深棕橘 Cocoa & Citrus',
+    note: '深可可 + 柑橘黃 · 咖啡店感，溫潤又有活力',
+    bg: '#FBF4E8',
+    page: '#3D2418',
+    pageDark: '#291810',
+    cream: '#F0DDB8',
+    chip1: '#F4A93F', chip2: '#C46A2D',
+    accent: '#F4A93F',
+  },
+];
+
+function CartIllus({ size = 96, color = '#C73E5A', chip1 = '#F7A23B', chip2 = '#7BC97A' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 200 200">
+      <ellipse cx="100" cy="180" rx="62" ry="6" fill="#000" opacity="0.08"/>
+      <path d="M48 70 L60 175 Q60 178 64 178 L136 178 Q140 178 140 175 L152 70 Z" fill={color}/>
+      <path d="M52 75 L62 160 Q63 163 67 162 L80 158 L70 75 Z" fill="#fff" opacity="0.18"/>
+      <path d="M70 70 Q70 30 100 30 Q130 30 130 70" fill="none" stroke={color} strokeWidth="9" strokeLinecap="round"/>
+      <circle cx="86" cy="62" r="14" fill={chip1}/>
+      <circle cx="115" cy="58" r="11" fill={chip2}/>
+      <path d="M100 60 L108 64 L106 76 L98 74 Z" fill="#fff"/>
+    </svg>
+  );
+}
+
+function Phone({ p, accent }) {
+  // accent for CTA — use chip1 contrast color or override
+  const cta = p.accent || p.page;
+  return (
+    <div style={{
+      width: 250, height: 480, borderRadius: 32, overflow: 'hidden',
+      background: p.bg, position: 'relative',
+      boxShadow: '0 20px 50px -20px rgba(36,31,26,0.25), 0 0 0 1px rgba(36,31,26,0.06)',
+      fontFamily: '"Noto Sans TC", system-ui',
+    }}>
+      {/* status bar */}
+      <div style={{ height: 30 }}/>
+
+      {/* Hero card */}
+      <div style={{
+        margin: '8px 14px 0', height: 320,
+        background: p.cream, borderRadius: 22,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        padding: '20px 16px',
+        position: 'relative', overflow: 'hidden',
+      }}>
+        <div style={{ position: 'absolute', top: 18, left: 18, width: 3, height: 3, borderRadius: 2, background: p.page }}/>
+        <div style={{ position: 'absolute', top: 28, right: 22, width: 3, height: 3, borderRadius: 2, background: p.page, opacity: 0.5 }}/>
+        <div style={{ position: 'absolute', bottom: 50, right: 16, width: 3, height: 3, borderRadius: 2, background: p.page }}/>
+
+        <CartIllus size={120} color={p.page} chip1={p.chip1} chip2={p.chip2}/>
+
+        <div style={{ marginTop: 18, textAlign: 'center' }}>
+          <div style={{
+            fontSize: 8, fontWeight: 700, letterSpacing: 3,
+            color: cta, marginBottom: 8,
+          }}>CART HELPER</div>
+          <div style={{
+            fontSize: 18, fontWeight: 700, lineHeight: 1.3, letterSpacing: -0.2,
+            color: p.pageDark === '#291810' ? p.pageDark : '#1A1416',
+          }}>掃一下標籤<br/>收據不踩雷</div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 4, marginTop: 14 }}>
+          <div style={{ width: 12, height: 3, borderRadius: 2, background: cta }}/>
+          <div style={{ width: 3, height: 3, borderRadius: 2, background: cta, opacity: 0.3 }}/>
+          <div style={{ width: 3, height: 3, borderRadius: 2, background: cta, opacity: 0.3 }}/>
+        </div>
+      </div>
+
+      <div style={{ padding: '14px 14px 0' }}>
+        <button style={{
+          width: '100%', height: 42, borderRadius: 21, border: 'none',
+          background: cta, color: '#fff', fontSize: 12, fontWeight: 700,
+          fontFamily: '"Noto Sans TC", system-ui',
+          boxShadow: `0 8px 16px -8px ${cta}`,
+        }}>開始</button>
+      </div>
+
+      {/* home indicator */}
+      <div style={{
+        position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)',
+        width: 80, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.25)',
+      }}/>
+    </div>
+  );
+}
+
+function Swatches({ p }) {
+  const swatches = [
+    { c: p.page, l: '主色' },
+    { c: p.pageDark, l: '深色' },
+    { c: p.cream, l: '卡片' },
+    { c: p.chip1, l: '輔色' },
+    { c: p.chip2, l: '輔色' },
+    { c: p.bg, l: '背景' },
+  ];
+  return (
+    <div style={{ display: 'flex', gap: 6 }}>
+      {swatches.map((s, i) => (
+        <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+          <div style={{
+            width: 28, height: 36, borderRadius: 6, background: s.c,
+            border: '1px solid rgba(0,0,0,0.08)',
+          }}/>
+          <div style={{ fontSize: 9, color: '#7A6B72', fontWeight: 600 }}>{s.l}</div>
+          <div style={{ fontSize: 8.5, color: '#1A1416', fontFamily: 'Inter, monospace', fontWeight: 600 }}>{s.c}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Card({ p }) {
+  return (
+    <div style={{
+      background: '#fff', borderRadius: 24, padding: 22,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18,
+      boxShadow: '0 1px 0 rgba(0,0,0,0.04), 0 12px 30px -18px rgba(0,0,0,0.18)',
+      position: 'relative',
+    }}>
+      {p.tag && (
+        <div style={{
+          position: 'absolute', top: 14, right: 14,
+          padding: '3px 9px', borderRadius: 999,
+          background: p.page, color: '#fff', fontSize: 9, fontWeight: 800, letterSpacing: 0.5,
+        }}>{p.tag}</div>
+      )}
+
+      <div style={{ alignSelf: 'flex-start' }}>
+        <div style={{
+          fontSize: 9, fontWeight: 800, letterSpacing: 2,
+          color: p.page, marginBottom: 2, fontFamily: 'Inter, system-ui',
+        }}>{p.id}</div>
+        <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.3 }}>{p.name}</div>
+        <div style={{ fontSize: 11, color: '#7A6B72', marginTop: 4, lineHeight: 1.5, maxWidth: 240 }}>
+          {p.note}
+        </div>
+      </div>
+
+      <Phone p={p}/>
+
+      <Swatches p={p}/>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <div style={{ padding: '40px 32px 60px' }}>
+      <div style={{ maxWidth: 1500, margin: '0 auto' }}>
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 3, color: '#C73E5A', marginBottom: 6 }}>
+            COLOR PALETTES
+          </div>
+          <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: -0.6 }}>
+            Cart Helper · 配色推薦
+          </div>
+          <div style={{ fontSize: 14, color: '#5A4F44', marginTop: 6, maxWidth: 600, lineHeight: 1.6 }}>
+            維持風格 A 的版面（米白卡片 + 大圓角 + 卡通插畫），只換主色 + 卡片底色。
+            <b style={{ color: '#1A1416' }}>番茄紅 (A1)</b> 是我最推的：比原本緋紅暖、更有超市食物感，又不會太太女性化。
+          </div>
+        </div>
+
+        <div style={{
+          display: 'grid', gap: 20,
+          gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))',
+        }}>
+          {palettes.map(p => <Card key={p.id} p={p}/>)}
+        </div>
+
+        <div style={{
+          marginTop: 36, padding: 20, background: '#fff', borderRadius: 16,
+          fontSize: 13, color: '#5A4F44', lineHeight: 1.7, maxWidth: 720,
+        }}>
+          <b style={{ color: '#1A1416' }}>怎麼挑：</b>
+          <div>· 想最穩、最接近參考圖 → <b>A0 緋紅</b></div>
+          <div>· 想更有「超市/食物」氣味 → <b>A1 番茄紅</b> 或 <b>A2 楓糖橘</b></div>
+          <div>· 想精緻、有 lifestyle 感 → <b>A3 胭脂粉</b> 或 <b>A4 酒紅</b></div>
+          <div>· 想跳出紅色路線 → <b>A5 抹茶綠</b>（健康）或 <b>A6 深藍橘</b>（撞色，最有設計師感）</div>
+          <div>· 想最有質感、很咖啡店 → <b>A7 深棕橘</b></div>
+          <div style={{ marginTop: 10 }}>選好後告訴我編號，我把全部 10 個畫面套上這個色系做完。</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

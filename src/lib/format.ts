@@ -7,8 +7,8 @@ const CURRENCY_SYMBOL: Record<Currency, string> = {
   KRW: '₩',
 };
 
-export function currencySymbol(code: Currency): string {
-  return CURRENCY_SYMBOL[code] ?? code;
+export function currencySymbol(code: Currency | string): string {
+  return CURRENCY_SYMBOL[code as Currency] ?? code;
 }
 
 export function formatAmount(amount: number, locale: string): string {
@@ -16,5 +16,16 @@ export function formatAmount(amount: number, locale: string): string {
     return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(amount);
   } catch {
     return String(Math.round(amount));
+  }
+}
+
+export function formatNumber(amount: number, locale: string, fractionDigits = 0): string {
+  try {
+    return new Intl.NumberFormat(locale, {
+      maximumFractionDigits: fractionDigits,
+      minimumFractionDigits: fractionDigits,
+    }).format(amount);
+  } catch {
+    return amount.toFixed(fractionDigits);
   }
 }

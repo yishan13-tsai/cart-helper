@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Cart Helper · 風格探索</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Noto+Serif+TC:wght@400;700;900&display=swap" rel="stylesheet"/>
+<style>
+  html, body { margin: 0; padding: 0; background: #EFE7DA; font-family: "Noto Sans TC", -apple-system, system-ui, sans-serif; }
+  *::-webkit-scrollbar { display: none; }
+  * { scrollbar-width: none; }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="tokens.js"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="styles-explore.jsx"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { DesignCanvas, DCSection, DCArtboard, IOSDevice } = window;
+const {
+  StyleA_Onboarding, StyleA_Home,
+  StyleB_Onboarding, StyleB_Home,
+  StyleC_Onboarding, StyleC_Home,
+} = window;
+
+const phone = (Screen, dark = false) => (
+  <IOSDevice dark={dark}>
+    <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+      <Screen/>
+    </div>
+  </IOSDevice>
+);
+
+function App() {
+  return (
+    <DesignCanvas
+      title="Cart Helper · 三種風格探索"
+      subtitle="先用 Onboarding + 購物車總覽兩個畫面試水溫"
+    >
+      <DCSection id="A" title="A · 插畫感緋紅  Illustrative Crimson  ·  柔和卡通插畫 + 單一強烈紅色 + 大圓角">
+        <DCArtboard id="a1" label="01  歡迎引導" width={402} height={874}>{phone(StyleA_Onboarding)}</DCArtboard>
+        <DCArtboard id="a2" label="02  購物車總覽" width={402} height={874}>{phone(StyleA_Home)}</DCArtboard>
+      </DCSection>
+
+      <DCSection id="B" title="B · 報紙編輯感  Editorial Mono  ·  襯線數字 + 細緻分隔線 + 米白紙感">
+        <DCArtboard id="b1" label="01  歡迎引導" width={402} height={874}>{phone(StyleB_Onboarding)}</DCArtboard>
+        <DCArtboard id="b2" label="02  購物車總覽" width={402} height={874}>{phone(StyleB_Home)}</DCArtboard>
+      </DCSection>
+
+      <DCSection id="C" title="C · 玻璃擬態夜  Glass Dark  ·  深色霓虹 + 玻璃模糊 + 漸層">
+        <DCArtboard id="c1" label="01  歡迎引導" width={402} height={874} dark>{phone(StyleC_Onboarding, true)}</DCArtboard>
+        <DCArtboard id="c2" label="02  購物車總覽" width={402} height={874} dark>{phone(StyleC_Home, true)}</DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

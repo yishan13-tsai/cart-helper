@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { CameraCapture } from '../components/CameraCapture';
+import { RoundButton } from '../components/RoundButton';
+import { TIcon } from '../components/TIcon';
+import { TripGate } from '../components/TripGate';
 import { useCartStore } from '../store/cart';
 import { resolveRecognizer } from '../lib/recognizer';
 
@@ -23,6 +26,32 @@ async function blobToDataURL(blob: Blob): Promise<string> {
   });
 }
 
+// Compact (~96px long edge, q=0.7) thumbnail data URL for storing alongside
+// each cart item. Keep it small — localStorage caps at a few MB and we may
+// have many cart items per session. Falls back to the full-size data URL on
+// browsers without canvas (effectively never in target devices).
+async function makeThumbnailDataURL(blob: Blob): Promise<string> {
+  if (typeof document === 'undefined' || typeof createImageBitmap !== 'function') {
+    return blobToDataURL(blob);
+  }
+  const bitmap = await createImageBitmap(blob);
+  try {
+    const longEdge = Math.max(bitmap.width, bitmap.height);
+    const scale = longEdge > 96 ? 96 / longEdge : 1;
+    const w = Math.max(1, Math.round(bitmap.width * scale));
+    const h = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return blobToDataURL(blob);
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    return canvas.toDataURL('image/jpeg', 0.7);
+  } finally {
+    bitmap.close();
+  }
+}
+
 export function CameraPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -33,10 +62,15 @@ export function CameraPage() {
   const pendingCount = useCartStore((s) => s.pendingItems.length);
   const total = useCartStore((s) => s.total);
   const currency = useCartStore((s) => s.currency);
+  const startedAt = useCartStore((s) => s.startedAt);
   const addItem = useCartStore((s) => s.addItem);
   const addPending = useCartStore((s) => s.addPending);
   const removePending = useCartStore((s) => s.removePending);
   const markPendingFailed = useCartStore((s) => s.markPendingFailed);
+
+  // Pre-trip gate — force user to open a trip before any photo is taken so
+  // every captured item has a parent trip in history.
+  const needsGate = startedAt === 0 && items.length === 0;
 
   useEffect(() => {
     if (!toast) return;
@@ -57,7 +91,7 @@ export function CameraPage() {
     const pendingId = uuid();
     let thumbnailUrl = '';
     try {
-      thumbnailUrl = await blobToDataURL(blob);
+      thumbnailUrl = await makeThumbnailDataURL(blob);
     } catch {
       // Thumbnail failure is non-fatal — just an empty preview.
     }
@@ -72,8 +106,9 @@ export function CameraPage() {
         const recognizer = resolveRecognizer();
         const recognized = await recognizer(blob, i18n.language);
         // Strip the synthetic recognizer ids — addItem assigns its own.
+        // Each item from this capture gets the same thumbnail.
         recognized.forEach(({ id: _id, createdAt: _createdAt, ...rest }) =>
-          addItem(rest),
+          addItem({ ...rest, thumbnailUrl: thumbnailUrl || undefined }),
         );
         removePending(pendingId);
       } catch (err) {
@@ -89,38 +124,75 @@ export function CameraPage() {
     | 'common.currency.JPY'
     | 'common.currency.KRW');
 
+  // Mode label for top bar — TODO i18n
+  const modeLabel = mode === 'product' ? 'SCAN TAG' : 'SCAN RECEIPT';
+
+  if (needsGate) {
+    // No-op onStarted: starting the trip flips `startedAt`, so this component
+    // re-renders and naturally falls through to the camera view.
+    return <TripGate onStarted={() => undefined} />;
+  }
+
   return (
-    <div className="relative flex h-full flex-col bg-neutral-900">
-      <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between bg-secondary-500/90 px-4 py-2 text-neutral-0 backdrop-blur">
-        <h1 className="text-sm font-bold">{t('camera.title')}</h1>
-        <div className="flex items-baseline gap-2">
-          <span className="font-mono text-base">
-            {symbol} {total.toLocaleString()}
-          </span>
-          <span className="text-2xs text-neutral-400">
-            {items.length} {t('camera.runningTotal.unit')}
-          </span>
-          {pendingCount > 0 && (
-            <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-primary-500/30 px-2 py-0.5 text-2xs">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary-500" />
-              {pendingCount}
-            </span>
-          )}
+    <div className="relative flex h-full flex-col bg-neutral-900 overflow-hidden">
+      {/* ── Top header (over camera, z-10) ───────────────────────── */}
+      <div className="absolute inset-x-0 top-0 z-20 pt-safe">
+        <div className="flex items-center justify-between px-[22px] py-3">
+          {/* Close */}
+          <RoundButton
+            icon="x"
+            tone="white"
+            aria-label="關閉"
+            onClick={() => navigate(-1)}
+          />
+
+          {/* Mode label */}
+          <div className="text-[11px] font-bold tracking-[4px] text-white/70 uppercase">
+            {modeLabel}
+          </div>
+
+          {/* Flash (product) / Grid (receipt) */}
+          <div className="relative">
+            <RoundButton
+              icon={mode === 'product' ? 'flash' : 'grid'}
+              tone="surface"
+              aria-label={mode === 'product' ? 'Flash' : 'Grid'}
+            />
+            {/* Pending count badge */}
+            {pendingCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-page/80 text-[9px] font-bold text-white">
+                {pendingCount}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Mode toggle pill */}
+        <div className="flex justify-center pb-2">
+          <ModeToggle mode={mode} onChange={setMode} />
         </div>
       </div>
 
-      <div className="absolute inset-x-0 top-12 z-10 flex justify-center">
-        <ModeToggle mode={mode} onChange={setMode} />
-      </div>
-
+      {/* ── Live camera (fills entire screen behind overlays) ────── */}
       <div className="flex-1">
         <CameraCapture onCapture={handleCapture} />
       </div>
 
+      {/* ── Bottom area: cart-info card ───────────────────────────── */}
+      <div className="absolute inset-x-0 bottom-0 z-20 px-[22px] pb-safe pb-6">
+        <CartInfoCard
+          count={items.length}
+          symbol={symbol}
+          total={total}
+          onClick={() => navigate('/cart')}
+        />
+      </div>
+
+      {/* ── Toast (capture feedback) ──────────────────────────────── */}
       {toast && (
         <div className="pointer-events-none absolute inset-x-0 top-28 z-30 flex justify-center animate-pop-in">
-          <div className="flex items-center gap-2 rounded-full bg-primary-500/95 px-4 py-2 text-xs font-bold text-neutral-0 shadow-hero">
-            <span aria-hidden>✓</span>
+          <div className="flex items-center gap-2 rounded-full bg-page/95 px-4 py-2 text-xs font-bold text-white shadow-hero">
+            <TIcon name="check" size={14} strokeWidth={2.6} />
             {toast}
           </div>
         </div>
@@ -129,6 +201,7 @@ export function CameraPage() {
   );
 }
 
+// ─── ModeToggle ─────────────────────────────────────────────────────────────
 function ModeToggle({
   mode,
   onChange,
@@ -140,7 +213,7 @@ function ModeToggle({
   return (
     <div
       role="tablist"
-      className="rounded-full bg-neutral-900/70 p-1 text-xs text-neutral-0 backdrop-blur"
+      className="flex gap-0 rounded-full bg-white p-1 shadow-sm"
     >
       <TabButton
         active={mode === 'product'}
@@ -171,11 +244,52 @@ function TabButton({
       aria-selected={active}
       type="button"
       onClick={onClick}
-      className={`rounded-full px-4 py-1 transition ${
-        active ? 'bg-primary-500 text-neutral-0' : 'text-neutral-400'
-      }`}
+      className={[
+        'rounded-full px-4 py-1.5 text-xs font-bold transition',
+        active ? 'bg-page text-white' : 'text-ink-60',
+      ].join(' ')}
     >
       {label}
+    </button>
+  );
+}
+
+// ─── CartInfoCard ────────────────────────────────────────────────────────────
+function CartInfoCard({
+  count,
+  symbol,
+  total,
+  onClick,
+}: {
+  count: number;
+  symbol: string;
+  total: number;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center gap-2.5 rounded-[18px] bg-white p-3 text-left shadow-sm active:scale-[0.98] transition"
+    >
+      {/* Cart icon in page-colored rounded square */}
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-page">
+        <TIcon name="cart" size={18} className="text-white" />
+      </div>
+
+      {/* Label + count/total */}
+      <div className="flex-1 min-w-0">
+        {/* TODO i18n */}
+        <div className="text-[11px] text-ink-60">已加入購物車</div>
+        <div className="text-sm font-bold text-ink">
+          {/* TODO i18n unit */}
+          {count} 件&nbsp;&middot;&nbsp;
+          <span className="font-num">{symbol}&nbsp;{total.toLocaleString()}</span>
+        </div>
+      </div>
+
+      {/* Chevron */}
+      <TIcon name="chev" size={16} className="shrink-0 text-ink-60" />
     </button>
   );
 }

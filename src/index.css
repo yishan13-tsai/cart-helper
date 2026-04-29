@@ -1,8 +1,166 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ───────── Theme tokens ─────────
+ * 8 themes from docs/design/cart-helper/project/themes.js. Default is tomato.
+ * Switch by setting `data-ch-theme` on <html>:
+ *   document.documentElement.dataset.chTheme = 'crimson';
+ */
+:root,
+:root[data-ch-theme='tomato'] {
+  --ch-bg: 255 250 245;
+  --ch-surface: 255 233 216;
+  --ch-page: 232 79 42;
+  --ch-page-dark: 184 58 28;
+  --ch-ink: 26 20 22;
+  --ch-ink60: 122 107 114;
+  --ch-ink30: 201 190 196;
+  --ch-ink10: 239 231 218;
+  --ch-chip1: 255 179 71;
+  --ch-chip2: 123 201 122;
+  --ch-success: 93 190 156;
+  --ch-success-wash: 221 239 229;
+  --ch-alert: 232 95 119;
+  --ch-alert-wash: 248 207 215;
+  --ch-warn: 233 185 73;
+  --ch-warn-wash: 248 234 194;
+}
+
+:root[data-ch-theme='crimson'] {
+  --ch-bg: 255 255 255;
+  --ch-surface: 251 239 229;
+  --ch-page: 199 62 90;
+  --ch-page-dark: 160 41 66;
+  --ch-ink: 26 20 22;
+  --ch-ink60: 122 107 114;
+  --ch-ink30: 201 190 196;
+  --ch-ink10: 239 231 218;
+  --ch-chip1: 247 162 59;
+  --ch-chip2: 123 201 122;
+  --ch-success: 93 190 156;
+  --ch-success-wash: 221 239 229;
+  --ch-alert: 232 95 119;
+  --ch-alert-wash: 248 207 215;
+  --ch-warn: 233 185 73;
+  --ch-warn-wash: 248 234 194;
+}
+
+:root[data-ch-theme='maple'] {
+  --ch-bg: 255 247 236;
+  --ch-surface: 252 233 205;
+  --ch-page: 224 122 31;
+  --ch-page-dark: 176 94 18;
+  --ch-ink: 26 20 22;
+  --ch-ink60: 122 107 114;
+  --ch-ink30: 201 190 196;
+  --ch-ink10: 239 231 218;
+  --ch-chip1: 244 181 63;
+  --ch-chip2: 156 197 121;
+  --ch-success: 93 190 156;
+  --ch-success-wash: 221 239 229;
+  --ch-alert: 232 95 119;
+  --ch-alert-wash: 248 207 215;
+  --ch-warn: 233 185 73;
+  --ch-warn-wash: 248 234 194;
+}
+
+:root[data-ch-theme='rouge'] {
+  --ch-bg: 255 250 247;
+  --ch-surface: 251 229 232;
+  --ch-page: 209 77 110;
+  --ch-page-dark: 164 54 79;
+  --ch-ink: 26 20 22;
+  --ch-ink60: 122 107 114;
+  --ch-ink30: 201 190 196;
+  --ch-ink10: 239 231 218;
+  --ch-chip1: 240 160 168;
+  --ch-chip2: 168 201 154;
+  --ch-success: 93 190 156;
+  --ch-success-wash: 221 239 229;
+  --ch-alert: 232 95 119;
+  --ch-alert-wash: 248 207 215;
+  --ch-warn: 233 185 73;
+  --ch-warn-wash: 248 234 194;
+}
+
+:root[data-ch-theme='bordeaux'] {
+  --ch-bg: 251 246 238;
+  --ch-surface: 240 228 210;
+  --ch-page: 142 42 58;
+  --ch-page-dark: 106 30 42;
+  --ch-ink: 26 20 22;
+  --ch-ink60: 122 107 114;
+  --ch-ink30: 201 190 196;
+  --ch-ink10: 239 231 218;
+  --ch-chip1: 217 160 91;
+  --ch-chip2: 123 159 112;
+  --ch-success: 93 190 156;
+  --ch-success-wash: 221 239 229;
+  --ch-alert: 232 95 119;
+  --ch-alert-wash: 248 207 215;
+  --ch-warn: 233 185 73;
+  --ch-warn-wash: 248 234 194;
+}
+
+:root[data-ch-theme='matcha'] {
+  --ch-bg: 251 247 236;
+  --ch-surface: 237 226 200;
+  --ch-page: 63 142 92;
+  --ch-page-dark: 44 107 67;
+  --ch-ink: 26 20 22;
+  --ch-ink60: 122 107 114;
+  --ch-ink30: 201 190 196;
+  --ch-ink10: 239 231 218;
+  --ch-chip1: 244 181 63;
+  --ch-chip2: 224 122 77;
+  --ch-success: 93 190 156;
+  --ch-success-wash: 221 239 229;
+  --ch-alert: 232 95 119;
+  --ch-alert-wash: 248 207 215;
+  --ch-warn: 233 185 73;
+  --ch-warn-wash: 248 234 194;
+}
+
+:root[data-ch-theme='navy'] {
+  --ch-bg: 255 248 238;
+  --ch-surface: 255 227 203;
+  --ch-page: 31 58 95;
+  --ch-page-dark: 20 40 68;
+  --ch-ink: 15 27 45;
+  --ch-ink60: 92 107 133;
+  --ch-ink30: 166 176 194;
+  --ch-ink10: 224 229 238;
+  --ch-chip1: 242 110 63;
+  --ch-chip2: 244 181 63;
+  --ch-success: 93 190 156;
+  --ch-success-wash: 221 239 229;
+  --ch-alert: 242 110 63;
+  --ch-alert-wash: 255 217 196;
+  --ch-warn: 244 181 63;
+  --ch-warn-wash: 251 230 181;
+}
+
+:root[data-ch-theme='cocoa'] {
+  --ch-bg: 251 244 232;
+  --ch-surface: 240 221 184;
+  --ch-page: 61 36 24;
+  --ch-page-dark: 41 24 16;
+  --ch-ink: 26 16 16;
+  --ch-ink60: 110 84 64;
+  --ch-ink30: 191 170 142;
+  --ch-ink10: 235 223 201;
+  --ch-chip1: 244 169 63;
+  --ch-chip2: 196 106 45;
+  --ch-success: 93 190 156;
+  --ch-success-wash: 221 239 229;
+  --ch-alert: 196 106 45;
+  --ch-alert-wash: 242 210 181;
+  --ch-warn: 244 169 63;
+  --ch-warn-wash: 251 230 181;
+}
 
 html,
 body,
@@ -11,30 +169,40 @@ body,
 }
 
 body {
-  @apply bg-neutral-50 text-neutral-900 font-sans antialiased;
+  @apply bg-bg text-ink font-sans antialiased;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Reusable patterns */
 @layer components {
   .card {
-    @apply bg-neutral-0 rounded-2xl shadow-card;
+    @apply bg-white rounded-2xl shadow-card;
   }
 
+  /* Pill-shaped primary button — matches design's <Btn> at lg size */
   .btn-primary {
-    @apply rounded-xl bg-primary-500 px-4 py-3 text-sm font-bold text-neutral-0 transition active:scale-[0.98] active:bg-primary-600 disabled:bg-neutral-200 disabled:text-neutral-400;
+    @apply h-12 rounded-full bg-page px-6 text-sm font-bold text-white shadow-cta transition active:scale-[0.98];
   }
 
   .btn-secondary {
-    @apply rounded-xl border border-primary-500 bg-neutral-0 px-4 py-3 text-sm font-bold text-primary-500 transition active:scale-[0.98] active:bg-primary-50;
+    @apply h-11 rounded-full border border-ink/15 bg-transparent px-5 text-sm font-bold text-ink-60 transition active:scale-[0.98] active:bg-surface;
   }
 
   .btn-ghost {
-    @apply rounded-xl px-4 py-3 text-sm font-bold text-neutral-700 transition hover:bg-neutral-100;
+    @apply rounded-full px-4 py-3 text-sm font-bold text-ink-60 transition hover:bg-surface;
   }
 
   .section-label {
-    @apply text-2xs font-bold uppercase tracking-wider text-neutral-400;
+    @apply text-2xs font-bold uppercase tracking-wider text-ink-60;
+  }
+
+  /* Round 36×36 button used for headers (close, flash, calendar etc.) */
+  .rb {
+    @apply flex h-9 w-9 items-center justify-center rounded-full bg-surface text-page;
+  }
+
+  /* Numerics use Inter (handed down from design's font system) */
+  .num {
+    font-family: 'Inter', system-ui, sans-serif;
   }
 }

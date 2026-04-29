@@ -10,7 +10,8 @@ export interface ChatMessage {
   fileIds?: string[];
 }
 
-export interface ChatOptions extends Pick<HttpOptions, 'fetcher' | 'config' | 'signal' | 'timeoutMs'> {
+export interface ChatOptions
+  extends Pick<HttpOptions, 'fetcher' | 'config' | 'signal' | 'timeoutMs' | 'retries'> {
   persist?: boolean;
   contextualFileIds?: string[];
   chatId?: string;
@@ -46,10 +47,11 @@ export async function chatV2(messages: ChatMessage[], opts: ChatOptions = {}): P
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-    // 30s per spec was too tight: live e2e probe measured 28s for OCR with
-    // a long zh-TW prompt — we'd flake on every call. 45s gives one retry of
-    // headroom. See docs/lib-vaultsage-report.md.
-    timeoutMs: opts.timeoutMs ?? 45_000,
+    // RAG mode (contextual_file_ids) does retrieve + LLM and routinely
+    // exceeds the original 45s on slow upstream load — bumped to 90s.
+    // BFF proxy is set to 180s so we can also retry once before it gives up.
+    timeoutMs: opts.timeoutMs ?? 90_000,
+    retries: opts.retries,
     fetcher: opts.fetcher,
     config: opts.config,
     signal: opts.signal,

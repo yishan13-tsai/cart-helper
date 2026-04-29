@@ -34,8 +34,10 @@ app.use(
     target: UPSTREAM,
     changeOrigin: true,
     xfwd: false,
-    timeout: 60_000,
-    proxyTimeout: 60_000,
+    // 180s gives the chat-v2 RAG path (90s client timeout + 1 retry)
+    // plenty of headroom before the proxy itself drops the upstream.
+    timeout: 180_000,
+    proxyTimeout: 180_000,
     // app.use('/api/v1', ...) strips the prefix before handing to the proxy,
     // so req.url here starts at '/'. Re-add /api/v1 so VaultSage sees the
     // original path.
