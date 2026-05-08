@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useCartStore, type PendingItem } from '../store/cart';
@@ -5,6 +6,8 @@ import { useBaseCurrency } from '../hooks/useBaseCurrency';
 import { useFxPreview } from '../hooks/useFxPreview';
 import { useBudget, classifyBudget } from '../hooks/useBudget';
 import { usePriceTrend } from '../hooks/usePriceTrend';
+import { parsePromotion } from '../lib/promotion';
+import { formatAmount } from '../lib/format';
 import { RoundButton } from '../components/RoundButton';
 import { Btn } from '../components/Btn';
 import { TIcon } from '../components/TIcon';
@@ -49,21 +52,21 @@ export function CartPage() {
   const baseSymbol = currencySymbol(t, base);
   const showFx = base !== currency && items.length > 0;
 
-  const totalCount = items.reduce((sum, it) => sum + it.quantity, 0);
-
   return (
-    <div className="relative flex min-h-full flex-col bg-bg">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-4 pb-2">
+    <div className="relative flex h-full flex-col overflow-hidden bg-bg">
+      {/* Header — kept tight; the right slot is intentionally empty for now
+          (the design's "edit" button had no real purpose in our app). */}
+      <div className="flex shrink-0 items-center justify-between px-5 pt-4 pb-2">
         <RoundButton icon="chevL" onClick={() => navigate(-1)} aria-label={t('common.back')} />
         <span className="text-[11px] font-bold tracking-[4px] text-ink-60 uppercase">
           CART HELPER
         </span>
-        <RoundButton icon="edit" aria-label={t('common.edit')} />
+        <div className="h-9 w-9" aria-hidden />
       </div>
 
-      {/* Title block */}
-      <div className="px-5 pb-2 pt-1">
+      {/* Title block — count = distinct products. Filter chip removed; with
+          a single "All N" chip it just duplicated the count. */}
+      <div className="shrink-0 px-5 pb-3 pt-1">
         <h1
           className="text-2xl font-bold leading-tight text-ink"
           style={{ letterSpacing: '-0.3px' }}
@@ -71,19 +74,16 @@ export function CartPage() {
           {t('nav.cart')}
         </h1>
         <p className="text-2xs text-ink-60">
-          {t('cart.items_count' as any, { n: totalCount })}
+          {t('cart.items_count' as any, { n: items.length })}
         </p>
       </div>
 
-      {/* Filter chip row — v1: single "全部 N" active chip */}
-      <div className="flex gap-2 overflow-x-auto px-5 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <span className="whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-xs font-bold text-white">
-          {t('cart.filters.all')} {items.length}
-        </span>
-      </div>
-
-      {/* Scrollable list area — bottom padding makes room for the floating card */}
-      <div className="flex-1 space-y-2 px-4 pb-44 pt-1">
+      {/* Scrollable list area — only this region scrolls; the subtotal card
+          sits in the static portion below so it always stays in view.
+          `min-h-0` is the magic flexbox bit: without it, flex-1 children
+          inside an `overflow-hidden` parent fail to shrink below their
+          content height and the scroll bubbles up to the page. */}
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 pb-4 pt-1">
         {/* Pending items */}
         {pendingItems.length > 0 && (
           <PendingList items={pendingItems} onDismiss={removePending} />
@@ -107,12 +107,28 @@ export function CartPage() {
             removeLabel={t('cart.item.remove')}
             onRemove={() => removeItem(item.id)}
             onQuantityChange={(qty) => updateItem(item.id, { quantity: qty })}
+            onPriceChange={(price) =>
+              updateItem(item.id, { unitPrice: price, priceEdited: true })
+            }
+            onPriceRevert={() =>
+              updateItem(item.id, {
+                unitPrice: item.originalUnitPrice ?? null,
+                priceEdited: false,
+              })
+            }
+            onPromotionToggle={() =>
+              updateItem(item.id, { promotionApplied: !item.promotionApplied })
+            }
           />
         ))}
       </div>
 
-      {/* Floating bottom subtotal card */}
-      <div className="absolute bottom-7 left-4 right-4 rounded-3xl bg-white p-4 shadow-nav">
+      {/* Subtotal card — outside the scroll region so it always stays visible
+          above the bottom nav. The bottom padding clears the floating SCAN
+          button (h-16, -translate-y-1/2 → pokes ~32px above the nav), so the
+          "End shopping trip" link below the CTA never gets overlapped. */}
+      <div className="shrink-0 px-4 pb-10 pt-2">
+        <div className="rounded-3xl bg-white p-4 shadow-nav">
         {/* Total row */}
         <div className="mb-3 flex items-baseline justify-between">
           <span
@@ -167,6 +183,7 @@ export function CartPage() {
             {t('cart.actions.endTrip')}
           </button>
         )}
+        </div>
       </div>
     </div>
   );
@@ -263,6 +280,9 @@ function ItemCard({
   removeLabel,
   onRemove,
   onQuantityChange,
+  onPriceChange,
+  onPriceRevert,
+  onPromotionToggle,
 }: {
   item: CartItem;
   symbol: string;
@@ -270,14 +290,25 @@ function ItemCard({
   removeLabel: string;
   onRemove: () => void;
   onQuantityChange: (qty: number) => void;
+  onPriceChange: (price: number | null) => void;
+  onPriceRevert: () => void;
+  onPromotionToggle: () => void;
 }) {
   const { t } = useTranslation();
   const trend = usePriceTrend(item);
 
-  const pricePerUnit =
+  const unit = t('common.unit.itemUnit', '件');
+  const priceText =
     item.unitPrice == null
       ? unknownPriceLabel
-      : `${symbol}${item.unitPrice.toLocaleString()}/${t('common.unit.itemUnit', '件')}`;
+      : `${symbol}${item.unitPrice.toLocaleString()}/${unit}`;
+
+  // Whether revert is meaningful: only when user actually edited AND we still
+  // hold the original. originalUnitPrice may be undefined for legacy items.
+  const canRevert =
+    item.priceEdited === true &&
+    item.originalUnitPrice != null &&
+    item.originalUnitPrice !== item.unitPrice;
 
   return (
     <div className="flex items-center gap-3 rounded-[18px] bg-white p-3 shadow-card">
@@ -297,7 +328,28 @@ function ItemCard({
       {/* Name + sub */}
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13px] font-bold text-ink">{item.name}</p>
-        <p className="mt-0.5 text-[11px] text-ink-60">{pricePerUnit}</p>
+
+        {/* Editable price line */}
+        <PriceLine
+          unitPrice={item.unitPrice}
+          symbol={symbol}
+          unitLabel={unit}
+          fallbackLabel={priceText}
+          edited={item.priceEdited === true}
+          canRevert={canRevert}
+          onChange={onPriceChange}
+          onRevert={onPriceRevert}
+        />
+
+        {/* Promotion toggle — actionable pill (apply / un-apply discount) */}
+        {item.promotion && (
+          <PromotionToggle
+            item={item}
+            symbol={symbol}
+            onToggle={onPromotionToggle}
+          />
+        )}
+
         {trend && trend.verdict !== 'flat' && (
           <PriceTrendPill
             symbol={symbol}
@@ -320,6 +372,162 @@ function ItemCard({
       >
         <TIcon name="trash" size={14} />
       </button>
+    </div>
+  );
+}
+
+function PromotionToggle({
+  item,
+  symbol,
+  onToggle,
+}: {
+  item: CartItem;
+  symbol: string;
+  onToggle: () => void;
+}) {
+  const { t, i18n } = useTranslation();
+  const promo = parsePromotion(item.promotion, item.unitPrice, item.quantity);
+  const applied = item.promotionApplied === true;
+
+  // Pattern not parseable (or qty/price doesn't unlock the deal yet) — show
+  // the OCR text muted so the user still sees what we read off the tag.
+  if (!promo) {
+    return (
+      <span
+        className="mt-1 inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[10px] font-bold leading-none text-ink-60"
+        title={t('cart.promotion.unsupported', '僅供參考，無法自動計算')}
+      >
+        <TIcon name="sparkle" size={10} strokeWidth={2.4} />
+        {item.promotion}
+      </span>
+    );
+  }
+
+  // Round the discount to a whole unit — TWD/JPY/KRW have no fractional unit,
+  // and even for USD a $35.60 promo savings reads more as noise than precision.
+  const discountText = `${symbol}${formatAmount(promo.discount, i18n.language)}`;
+  const tone = applied
+    ? 'bg-success-wash text-success'
+    : 'bg-warn-wash text-warn hover:brightness-95';
+  const label = applied
+    ? t('cart.promotion.applied', { savings: discountText })
+    : t('cart.promotion.apply', { savings: discountText });
+
+  // When parseable: pill shows the actionable savings amount only; the
+  // verbatim OCR text goes into title (and is still visible on the price tag
+  // the user just saw). Two-piece layout was too crowded on mobile.
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`mt-1 inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold leading-none transition ${tone}`}
+      title={item.promotion}
+    >
+      <TIcon name={applied ? 'check' : 'sparkle'} size={10} strokeWidth={2.4} />
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function PriceLine({
+  unitPrice,
+  symbol,
+  unitLabel,
+  fallbackLabel,
+  edited,
+  canRevert,
+  onChange,
+  onRevert,
+}: {
+  unitPrice: number | null;
+  symbol: string;
+  unitLabel: string;
+  fallbackLabel: string;
+  edited: boolean;
+  canRevert: boolean;
+  onChange: (price: number | null) => void;
+  onRevert: () => void;
+}) {
+  const { t } = useTranslation();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+
+  const startEdit = () => {
+    setDraft(unitPrice == null ? '' : String(unitPrice));
+    setEditing(true);
+  };
+
+  const commit = () => {
+    setEditing(false);
+    // Strip thousands separators and any whitespace before parsing — handles
+    // pastes like "1,200" or "  79 " without surprising the user.
+    const cleaned = draft.replace(/[,  ]/g, '');
+    if (cleaned === '') {
+      // Treat empty as "I don't know the price" — clear.
+      if (unitPrice != null) onChange(null);
+      return;
+    }
+    const n = Number(cleaned);
+    if (Number.isFinite(n) && n >= 0) {
+      // Skip no-op edits so we don't mark priceEdited=true unnecessarily.
+      if (n !== unitPrice) onChange(n);
+    }
+  };
+
+  if (editing) {
+    return (
+      <div className="mt-0.5 flex items-center gap-1">
+        <span className="text-[11px] text-ink-60">{symbol}</span>
+        <input
+          // type=text + inputMode=decimal works more consistently than
+          // type=number across iOS/Android (number sometimes hides "."
+          // and gives unwanted spinner UI on desktop).
+          type="text"
+          inputMode="decimal"
+          pattern="[0-9.,]*"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commit();
+            else if (e.key === 'Escape') setEditing(false);
+          }}
+          autoFocus
+          className="w-20 rounded-md border border-page/40 bg-bg px-1.5 py-0.5 text-[11px] font-bold text-ink focus:outline-none focus:ring-1 focus:ring-page"
+        />
+        <span className="text-[11px] text-ink-60">/{unitLabel}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+      <button
+        type="button"
+        onClick={startEdit}
+        title={t('cart.priceEdit.tapHint', '點擊修改價格')}
+        className="inline-flex items-center gap-1 rounded text-[11px] text-ink-60 hover:text-page"
+      >
+        {fallbackLabel}
+        <TIcon name="edit" size={10} className="opacity-50" strokeWidth={2} />
+      </button>
+      {edited && (
+        <span
+          className="inline-flex items-center gap-1 rounded-full bg-page/10 px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-page"
+          title={t('cart.priceEdit.editedTitle', '此價格已被修改')}
+        >
+          {t('cart.priceEdit.editedTag', '已修改')}
+        </span>
+      )}
+      {canRevert && (
+        <button
+          type="button"
+          onClick={onRevert}
+          className="text-[10px] font-bold text-ink-60 underline-offset-2 hover:text-page hover:underline"
+        >
+          {t('cart.priceEdit.revert', '還原')}
+        </button>
+      )}
     </div>
   );
 }

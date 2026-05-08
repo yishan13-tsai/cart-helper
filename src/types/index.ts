@@ -10,6 +10,17 @@ export interface CartItem {
   /** Small (~96px) data URL of the captured photo, persisted in localStorage. */
   thumbnailUrl?: string;
   confidence?: number;
+  /**
+   * Free-text promotion label captured by OCR (e.g. "第二件 6 折", "兩件 99").
+   * Stored verbatim. `parsePromotion()` decides if we can compute the math.
+   */
+  promotion?: string;
+  /** True when the user opted in to the promotion (cart total subtracts the discount). */
+  promotionApplied?: boolean;
+  /** True when the user has manually overridden `unitPrice`. */
+  priceEdited?: boolean;
+  /** OCR-captured price preserved so the user can revert a manual edit. */
+  originalUnitPrice?: number | null;
   createdAt: number;
 }
 

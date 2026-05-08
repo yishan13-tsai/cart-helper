@@ -51,10 +51,12 @@ export const realRecognizer: Recognizer = async (blob, locale) => {
       id: uuid(),
       name: item.name,
       unitPrice: item.unitPrice,
+      originalUnitPrice: item.unitPrice,
       quantity: item.quantity,
       currency: item.currency,
       sourceFileId: item.sourceFileId,
       confidence: item.confidence,
+      promotion: item.promotion,
       createdAt: now,
     }));
   } catch (err) {

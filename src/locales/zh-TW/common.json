@@ -91,6 +91,19 @@
     "priceTrend": {
       "hike": "上次 {{last}}（{{sign}}{{pct}}%）",
       "drop": "上次 {{last}}（{{sign}}{{pct}}%）"
+    },
+    "priceEdit": {
+      "tapHint": "點擊修改價格",
+      "edited": "已修改",
+      "editedTag": "已修改",
+      "editedTitle": "此價格已被你修改",
+      "revert": "還原原價"
+    },
+    "promotion": {
+      "title": "價格促銷",
+      "apply": "套用省 {{savings}}",
+      "applied": "已省 {{savings}}",
+      "unsupported": "僅供參考，無法自動計算"
     }
   },
   "receipt": {

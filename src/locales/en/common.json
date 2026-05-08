@@ -91,6 +91,19 @@
     "priceTrend": {
       "hike": "Last {{last}} ({{sign}}{{pct}}%)",
       "drop": "Last {{last}} ({{sign}}{{pct}}%)"
+    },
+    "priceEdit": {
+      "tapHint": "Tap to edit price",
+      "edited": "Edited",
+      "editedTag": "Edited",
+      "editedTitle": "You edited this price",
+      "revert": "Revert"
+    },
+    "promotion": {
+      "title": "Promotion",
+      "apply": "Save {{savings}}",
+      "applied": "Saved {{savings}}",
+      "unsupported": "Reference only — can't auto-compute"
     }
   },
   "receipt": {

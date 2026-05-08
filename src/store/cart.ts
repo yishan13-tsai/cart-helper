@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { CartItem, ComparisonResult, Currency } from '../types';
 import { useHistoryStore } from './history';
+import { parsePromotion } from '../lib/promotion';
 
 export interface PendingItem {
   id: string;
@@ -60,7 +61,12 @@ function uuid(): string {
 function computeTotal(items: CartItem[]): number {
   return items.reduce((sum, item) => {
     if (item.unitPrice == null) return sum;
-    return sum + item.unitPrice * item.quantity;
+    let line = item.unitPrice * item.quantity;
+    if (item.promotionApplied && item.promotion) {
+      const promo = parsePromotion(item.promotion, item.unitPrice, item.quantity);
+      if (promo) line = Math.max(0, line - promo.discount);
+    }
+    return sum + line;
   }, 0);
 }
 

@@ -1,11 +1,13 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useHistoryStore } from '../store/history';
+import { useBaseCurrency } from '../hooks/useBaseCurrency';
 import { RoundButton } from '../components/RoundButton';
 import { Pill } from '../components/Pill';
 import { Btn } from '../components/Btn';
 import { TIcon } from '../components/TIcon';
 import { StackIllus } from '../components/illustrations';
+import { currencySymbol, formatAmount } from '../lib/format';
 import type { HistoryEntry } from '../types';
 
 // ── date helpers ────────────────────────────────────────────────────────────
@@ -59,13 +61,14 @@ function DateSquare({ ts }: { ts: number }) {
 // ── TripRow ──────────────────────────────────────────────────────────────────
 
 function TripRow({ entry }: { entry: HistoryEntry }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { cart, comparison } = entry;
   const ts = cart.startedAt ?? entry.savedAt;
 
   const storeName = cart.store ?? t('history.entry.defaultStore');
   const itemCount = cart.items.length;
   const total = cart.total;
+  const sym = currencySymbol(cart.currency);
 
   // Pill + diff
   let pillTone: 'success' | 'alert' | 'neutral' = 'neutral';
@@ -88,7 +91,7 @@ function TripRow({ entry }: { entry: HistoryEntry }) {
 
     if (Math.abs(diff) >= 0.01) {
       const sign = diff > 0 ? '+' : '−';
-      diffDisplay = `${sign}NT$${Math.abs(Math.round(diff)).toLocaleString()}`;
+      diffDisplay = `${sign}${sym}${formatAmount(Math.abs(diff), i18n.language)}`;
       diffColor = diff > 0 ? 'text-alert' : 'text-success';
     }
   }
@@ -103,7 +106,7 @@ function TripRow({ entry }: { entry: HistoryEntry }) {
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-bold text-ink">{storeName}</div>
         <div className="mt-0.5 text-[11px] text-ink-60">
-          {t('cart.items_count', { n: itemCount })} · NT${total.toLocaleString()}
+          {t('cart.items_count', { n: itemCount })} · {sym}{formatAmount(total, i18n.language)}
         </div>
       </div>
 
@@ -120,8 +123,12 @@ function TripRow({ entry }: { entry: HistoryEntry }) {
 // ── Hero card ────────────────────────────────────────────────────────────────
 
 function HeroCard({ entries }: { entries: HistoryEntry[] }) {
-  const { t } = useTranslation();
-  // "本月省下" = sum of (totalInCart - totalOnReceipt) where the cart was cheaper
+  const { t, i18n } = useTranslation();
+  const [base] = useBaseCurrency();
+  // "本月省下" = sum of (totalInCart - totalOnReceipt) where the cart was cheaper.
+  // Only sums trips whose cart currency matches the user's base currency —
+  // cross-currency aggregation would need live FX, which is overkill for the
+  // hero. Mismatched trips still count toward tripCount/diffCount.
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
 
@@ -135,10 +142,12 @@ function HeroCard({ entries }: { entries: HistoryEntry[] }) {
     tripCount++;
     if (e.comparison) {
       const d = e.comparison.difference;
-      if (d < 0) saved += Math.abs(d); // negative diff = receipt cheaper = saved
+      if (d < 0 && e.cart.currency === base) saved += Math.abs(d);
       if (Math.abs(d) >= 0.01) diffCount++;
     }
   }
+
+  const sym = currencySymbol(base);
 
   return (
     <div className="relative overflow-hidden rounded-3xl bg-surface p-4 flex items-center gap-3.5">
@@ -146,8 +155,8 @@ function HeroCard({ entries }: { entries: HistoryEntry[] }) {
       <div className="flex-1">
         <div className="text-[11px] font-semibold text-ink-60">{t('history.heroSavedThisMonth' as any)}</div>
         <div className="font-num text-[28px] font-extrabold text-page leading-tight tracking-tight">
-          <span className="text-sm opacity-70">NT$</span>
-          {Math.round(saved).toLocaleString()}
+          <span className="text-sm opacity-70">{sym}</span>
+          {formatAmount(Math.round(saved), i18n.language)}
         </div>
         <div className="mt-1 text-[11px] text-ink-60">
           {t('history.heroSubline' as any, { tripCount, diffCount })}

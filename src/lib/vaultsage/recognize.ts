@@ -61,10 +61,12 @@ function toCartItem(
   return {
     name: item.name,
     unitPrice: item.unit_price,
+    originalUnitPrice: item.unit_price,
     quantity: item.quantity,
     currency: coerceCurrency(item.currency, fallback),
     sourceFileId,
     confidence,
+    promotion: item.promotion?.trim() || undefined,
   };
 }
 

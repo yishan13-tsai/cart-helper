@@ -18,9 +18,12 @@ function fmtDate(ts: number): string {
   return `${mm}/${dd}`;
 }
 
+type Status = 'ok' | 'price-diff' | 'miss' | 'extra';
+
 // Status dot colors (matches design token names mapped to Tailwind classes)
-const DOT_CLASS: Record<'ok' | 'miss' | 'extra', string> = {
+const DOT_CLASS: Record<Status, string> = {
   ok: 'bg-success',
+  'price-diff': 'bg-alert',
   miss: 'bg-warn',
   extra: 'bg-chip-2',
 };
@@ -34,7 +37,7 @@ function ItemCard({
   locale,
 }: {
   item: CartItem;
-  status: 'ok' | 'miss' | 'extra';
+  status: Status;
   currency: Currency;
   locale: string;
 }) {
@@ -81,7 +84,7 @@ function Col({
   title: string;
   total: number;
   items: CartItem[];
-  statusMap: Map<string, 'ok' | 'miss' | 'extra'>;
+  statusMap: Map<string, Status>;
   accent: 'border-page' | 'border-chip-2';
   currency: Currency;
   locale: string;
@@ -145,12 +148,38 @@ export function ComparisonResultPage() {
   // freshly-minted ids (m-0, mi-0, e-0…), so we can't compare against
   // entry.cart.items[].id directly — we match by normalized name instead.
   const cartItems: CartItem[] = entry.cart.items;
-  const matchedNames = result.matched.map((m) => m.name);
   const missingNames = result.missingFromReceipt.map((m) => m.name);
 
-  const cartStatusMap = new Map<string, 'ok' | 'miss' | 'extra'>();
+  // Items appear in `matched` based on name, but the receipt's unitPrice can
+  // still differ from the cart's — that's a price discrepancy, not a match.
+  // Compare line totals (unitPrice × quantity) so quantity differences also
+  // surface as a price-diff.
+  const PRICE_EPS = 0.01;
+  const matchedOk: typeof result.matched = [];
+  const matchedPriceDiff: typeof result.matched = [];
+  for (const m of result.matched) {
+    const cartCounterpart = cartItems.find((c) => namesMatch(m.name, c.name));
+    const cartLine =
+      cartCounterpart && cartCounterpart.unitPrice != null
+        ? cartCounterpart.unitPrice * cartCounterpart.quantity
+        : null;
+    const receiptLine =
+      m.unitPrice == null ? null : m.unitPrice * m.quantity;
+    const same =
+      cartLine != null &&
+      receiptLine != null &&
+      Math.abs(cartLine - receiptLine) < PRICE_EPS;
+    if (same) matchedOk.push(m);
+    else matchedPriceDiff.push(m);
+  }
+  const matchedOkNames = matchedOk.map((m) => m.name);
+  const matchedDiffNames = matchedPriceDiff.map((m) => m.name);
+
+  const cartStatusMap = new Map<string, Status>();
   for (const item of cartItems) {
-    if (matchedNames.some((n) => namesMatch(n, item.name))) {
+    if (matchedDiffNames.some((n) => namesMatch(n, item.name))) {
+      cartStatusMap.set(item.id, 'price-diff');
+    } else if (matchedOkNames.some((n) => namesMatch(n, item.name))) {
       cartStatusMap.set(item.id, 'ok');
     } else if (missingNames.some((n) => namesMatch(n, item.name))) {
       cartStatusMap.set(item.id, 'miss');
@@ -167,21 +196,34 @@ export function ComparisonResultPage() {
     ...result.matched,
     ...result.extraOnReceipt,
   ];
-  const receiptStatusMap = new Map<string, 'ok' | 'miss' | 'extra'>();
-  for (const item of result.matched) receiptStatusMap.set(item.id, 'ok');
+  const receiptStatusMap = new Map<string, Status>();
+  for (const item of matchedOk) receiptStatusMap.set(item.id, 'ok');
+  for (const item of matchedPriceDiff) receiptStatusMap.set(item.id, 'price-diff');
   for (const item of result.extraOnReceipt) receiptStatusMap.set(item.id, 'extra');
 
-  // Hero stats
-  const diff = result.difference;
+  // Trust local cart data over the LLM's `total_in_cart` — the LLM sometimes
+  // hallucinates the cart total (e.g. typing a different number than what we
+  // sent it), but the user's cart sum is something we know exactly. Receipt
+  // total still comes from the LLM since it reads the receipt's printed total.
+  // Difference is recomputed so the three numbers never disagree on screen.
+  const totalInCart = entry.cart.total;
+  const totalOnReceipt = result.totalOnReceipt;
+  const diff = totalOnReceipt - totalInCart;
   const isMatch = Math.abs(diff) < 0.01;
   const discrepancyCount =
-    result.missingFromReceipt.length + result.extraOnReceipt.length;
-  const diffTone = isMatch ? 'success' : diff > 0 ? 'alert' : 'warn';
+    matchedPriceDiff.length +
+    result.missingFromReceipt.length +
+    result.extraOnReceipt.length;
+  // Pill tone tracks discrepancy count (its label), not diff sign — otherwise
+  // a case where price-diffs net to zero would show "N differences" in green.
+  const diffTone = discrepancyCount === 0 && isMatch ? 'success' : 'alert';
+  // Diff color: red when receipt charged more, green when user saved, neutral
+  // when totals match (success-green also works there since the pill says so).
   const diffColorClass = isMatch
     ? 'text-success'
     : diff > 0
       ? 'text-alert'
-      : 'text-warn';
+      : 'text-success';
 
   const diffLabel = isMatch
     ? t('comparison.differenceMatch')
@@ -235,8 +277,8 @@ export function ComparisonResultPage() {
           {/* bottom row: 4-column stats grid */}
           <div className="grid grid-cols-4 gap-1.5">
             {[
-              { key: 'matched', count: result.matched.length, colorClass: 'text-success' },
-              { key: 'priceDiff', count: 0, colorClass: 'text-alert' },
+              { key: 'matched', count: matchedOk.length, colorClass: 'text-success' },
+              { key: 'priceDiff', count: matchedPriceDiff.length, colorClass: 'text-alert' },
               { key: 'missing', count: result.missingFromReceipt.length, colorClass: 'text-warn' },
               { key: 'extra', count: result.extraOnReceipt.length, colorClass: 'text-chip-2' },
             ].map(({ key, count, colorClass }) => (
@@ -257,7 +299,7 @@ export function ComparisonResultPage() {
         <Col
           sub={t('comparison.cartSub' as any)}
           title={t('comparison.cartLabel' as any)}
-          total={result.totalInCart}
+          total={totalInCart}
           items={cartItems}
           statusMap={cartStatusMap}
           accent="border-page"
@@ -267,7 +309,7 @@ export function ComparisonResultPage() {
         <Col
           sub={t('comparison.receiptSub' as any)}
           title={t('comparison.receiptLabel' as any)}
-          total={result.totalOnReceipt}
+          total={totalOnReceipt}
           items={receiptItems}
           statusMap={receiptStatusMap}
           accent="border-chip-2"

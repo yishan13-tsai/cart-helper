@@ -91,6 +91,19 @@
     "priceTrend": {
       "hike": "지난번 {{last}} ({{sign}}{{pct}}%)",
       "drop": "지난번 {{last}} ({{sign}}{{pct}}%)"
+    },
+    "priceEdit": {
+      "tapHint": "탭하여 가격 수정",
+      "edited": "수정됨",
+      "editedTag": "수정됨",
+      "editedTitle": "이 가격은 수동으로 수정되었습니다",
+      "revert": "되돌리기"
+    },
+    "promotion": {
+      "title": "할인",
+      "apply": "{{savings}} 절약",
+      "applied": "{{savings}} 절약됨",
+      "unsupported": "참고용 — 자동 계산 불가"
     }
   },
   "receipt": {

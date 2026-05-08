@@ -91,6 +91,19 @@
     "priceTrend": {
       "hike": "前回 {{last}} ({{sign}}{{pct}}%)",
       "drop": "前回 {{last}} ({{sign}}{{pct}}%)"
+    },
+    "priceEdit": {
+      "tapHint": "タップで価格を編集",
+      "edited": "編集済み",
+      "editedTag": "編集済み",
+      "editedTitle": "この価格は手動で編集されました",
+      "revert": "元に戻す"
+    },
+    "promotion": {
+      "title": "プロモーション",
+      "apply": "{{savings}} お得",
+      "applied": "{{savings}} お得",
+      "unsupported": "参考のみ — 自動計算不可"
     }
   },
   "receipt": {

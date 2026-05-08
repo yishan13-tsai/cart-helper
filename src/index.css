@@ -172,6 +172,11 @@ body {
   @apply bg-bg text-ink font-sans antialiased;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Block iOS double-tap zoom and prevent text-selection rubber-band on
+   * scrollable areas. The viewport meta also disables pinch-zoom. */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
 }
 
 @layer components {
