@@ -5,6 +5,7 @@ import { TIcon, type TIconName } from '../components/TIcon';
 import { LocaleSwitcher } from '../components/LocaleSwitcher';
 import { useBaseCurrency } from '../hooks/useBaseCurrency';
 import { useBudget } from '../hooks/useBudget';
+import { useTheme, THEMES, THEME_ACCENTS } from '../hooks/useTheme';
 import { useCartStore } from '../store/cart';
 import { useHistoryStore } from '../store/history';
 import type { Currency } from '../types';
@@ -124,6 +125,7 @@ export function SettingsPage() {
   const { t, i18n } = useTranslation();
   const [base, setBase] = useBaseCurrency();
   const [budget, setBudget] = useBudget();
+  const [theme, setTheme] = useTheme();
   const clearCart = useCartStore((s) => s.clear);
   const cartItemCount = useCartStore((s) => s.items.length);
   const clearHistory = useHistoryStore((s) => s.clear);
@@ -229,7 +231,32 @@ export function SettingsPage() {
           </Row>
         </Section>
 
-        {/* 3. 關於 */}
+        {/* 3. 外觀 */}
+        <Section label={t('settings.appearance.label')}>
+          <Row icon="sparkle" label={t('settings.theme.label')} first>
+            <div className="flex flex-wrap gap-2.5 pt-1">
+              {THEMES.map((th) => (
+                <button
+                  key={th}
+                  type="button"
+                  onClick={() => setTheme(th)}
+                  aria-label={th}
+                  aria-pressed={theme === th}
+                  className="relative h-8 w-8 rounded-full transition-transform active:scale-90"
+                  style={{ backgroundColor: THEME_ACCENTS[th] }}
+                >
+                  {theme === th && (
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <TIcon name="check" size={16} strokeWidth={2.5} className="text-white" />
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </Row>
+        </Section>
+
+        {/* 4. 關於 */}
         <Section label={t('settings.about.label')}>
           <Row
             icon="info"
@@ -249,7 +276,7 @@ export function SettingsPage() {
           />
         </Section>
 
-        {/* 4. 危險區 */}
+        {/* 5. 危險區 */}
         <Section label={t('settings.danger.label')}>
           <Row
             icon="trash"

@@ -234,6 +234,12 @@
     },
     "privacy": {
       "label": "Privacy"
+    },
+    "appearance": {
+      "label": "Appearance"
+    },
+    "theme": {
+      "label": "Theme"
     }
   },
   "home": {

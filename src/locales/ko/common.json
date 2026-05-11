@@ -234,6 +234,12 @@
     },
     "privacy": {
       "label": "개인정보 보호"
+    },
+    "appearance": {
+      "label": "외관"
+    },
+    "theme": {
+      "label": "테마"
     }
   },
   "home": {

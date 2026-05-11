@@ -234,6 +234,12 @@
     },
     "privacy": {
       "label": "隱私權"
+    },
+    "appearance": {
+      "label": "外觀"
+    },
+    "theme": {
+      "label": "主題色"
     }
   },
   "home": {

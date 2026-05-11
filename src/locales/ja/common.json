@@ -234,6 +234,12 @@
     },
     "privacy": {
       "label": "プライバシー"
+    },
+    "appearance": {
+      "label": "外観"
+    },
+    "theme": {
+      "label": "テーマ"
     }
   },
   "home": {
