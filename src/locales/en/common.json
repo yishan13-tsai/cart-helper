@@ -248,8 +248,15 @@
     "storePlaceholder": "Store name (optional)"
   },
   "list": {
-    "title": "Shopping list",
-    "subtitle": "Coming soon — list items before you go, auto-checked as you scan."
+    "title": "Shopping List",
+    "subtitle": "Add items before your trip — auto-checked when scanned",
+    "add": {
+      "placeholder": "Add an item"
+    },
+    "empty": {
+      "subtitle": "Add items before your trip and they'll be checked off when scanned"
+    },
+    "clearDone": "Clear done ({{n}})"
   },
   "common": {
     "scan": "Scan",

@@ -249,7 +249,14 @@
   },
   "list": {
     "title": "購物清單",
-    "subtitle": "即將推出 — 出門前先列要買的，掃到自動勾掉。"
+    "subtitle": "出門前先列好要買的，掃到自動打勾",
+    "add": {
+      "placeholder": "輸入商品名稱"
+    },
+    "empty": {
+      "subtitle": "出門前先列好，到店掃描會自動打勾"
+    },
+    "clearDone": "清除已完成（{{n}} 項）"
   },
   "common": {
     "scan": "掃描",

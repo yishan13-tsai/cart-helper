@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useCartStore, type PendingItem } from '../store/cart';
-import { useBaseCurrency } from '../hooks/useBaseCurrency';
-import { useFxPreview } from '../hooks/useFxPreview';
+import { useFxAll, TRAVEL_CURRENCIES } from '../hooks/useFxAll';
 import { useBudget, classifyBudget } from '../hooks/useBudget';
 import { usePriceTrend } from '../hooks/usePriceTrend';
 import { parsePromotion } from '../lib/promotion';
@@ -43,14 +42,12 @@ export function CartPage() {
   const endTrip = useCartStore((s) => s.endTrip);
   const startedAt = useCartStore((s) => s.startedAt);
 
-  const [base] = useBaseCurrency();
-  const fx = useFxPreview(total, currency, base);
+  const fxAll = useFxAll(total, currency);
   const [budget] = useBudget();
   const budgetState = classifyBudget(total, budget);
 
   const symbol = currencySymbol(t, currency);
-  const baseSymbol = currencySymbol(t, base);
-  const showFx = base !== currency && items.length > 0;
+  const showFxBar = items.length > 0;
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-bg">
@@ -141,8 +138,8 @@ export function CartPage() {
             {total.toLocaleString()}
           </span>
 
-          {/* FX preview if base != cart currency */}
-          {showFx && <FxChip fx={fx} baseSymbol={baseSymbol} base={base} />}
+          {/* Multi-currency FX row */}
+          {showFxBar && <FxBar fxAll={fxAll} cartCurrency={currency} t={t} />}
         </div>
 
         {/* Budget bar — shown only when user set one */}
@@ -602,37 +599,43 @@ function QuantityStepper({
   );
 }
 
-function FxChip({
-  fx,
-  baseSymbol,
-  base,
+function FxBar({
+  fxAll,
+  cartCurrency,
+  t,
 }: {
-  fx: ReturnType<typeof useFxPreview>;
-  baseSymbol: string;
-  base: string;
+  fxAll: ReturnType<typeof useFxAll>;
+  cartCurrency: string;
+  t: TFn;
 }) {
-  const { t } = useTranslation();
-
-  if (fx.loading && fx.amount == null) {
-    return <span className="text-2xs text-ink-30">…</span>;
-  }
-  if (fx.error) {
-    return <span className="text-2xs text-alert">{t('cart.fxError')}</span>;
-  }
-  if (fx.amount == null) return null;
-
-  const formatted = fx.amount.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  const targets = TRAVEL_CURRENCIES.filter((c) => c !== cartCurrency);
+  if (targets.length === 0) return null;
 
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-surface px-2.5 py-1 text-2xs font-bold text-page">
-      ≈&nbsp;{baseSymbol}{formatted}&nbsp;{base}
-      {fx.stale && (
-        <span className="opacity-60">{t('cart.fxStale')}</span>
+    <div className="mb-3 flex items-center gap-2">
+      {fxAll.stale && (
+        <span className="text-[10px] text-ink-30">{t('cart.fxStale')}</span>
       )}
-    </span>
+      {targets.map((code) => {
+        const amount = fxAll.amounts[code];
+        const sym = currencySymbol(t, code);
+        return (
+          <span
+            key={code}
+            className="inline-flex items-center gap-0.5 rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold text-page"
+          >
+            {fxAll.loading && amount == null ? (
+              <span className="text-ink-30">…</span>
+            ) : amount == null ? (
+              <span className="text-ink-30">—</span>
+            ) : (
+              <>≈&nbsp;{sym}{formatAmount(amount, 'en')}</>
+            )}
+            <span className="ml-0.5 text-[9px] font-bold opacity-50">{code}</span>
+          </span>
+        );
+      })}
+    </div>
   );
 }
 

@@ -9,7 +9,7 @@
     "history": "기록",
     "settings": "설정",
     "home": "홈",
-    "list": "리스트",
+    "list": "목록",
     "more": "더보기"
   },
   "camera": {
@@ -248,8 +248,15 @@
     "storePlaceholder": "매장명 (선택)"
   },
   "list": {
-    "title": "쇼핑 리스트",
-    "subtitle": "곧 출시 — 사기 전에 리스트를 만들고 스캔하면 자동 체크됩니다."
+    "title": "쇼핑 목록",
+    "subtitle": "외출 전에 목록 작성 — 스캔하면 자동 체크",
+    "add": {
+      "placeholder": "상품명 입력"
+    },
+    "empty": {
+      "subtitle": "외출 전에 항목을 추가하면 스캔 시 자동으로 체크됩니다"
+    },
+    "clearDone": "완료 항목 삭제（{{n}}개）"
   },
   "common": {
     "scan": "스캔",
