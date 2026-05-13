@@ -64,7 +64,7 @@ function computeTotal(items: CartItem[]): number {
     let line = item.unitPrice * item.quantity;
     if (item.promotionApplied && item.promotion) {
       const promo = parsePromotion(item.promotion, item.unitPrice, item.quantity);
-      if (promo) line = Math.max(0, line - promo.discount);
+      if (promo) line = Math.max(0, line - Math.round(promo.discount));
     }
     return sum + line;
   }, 0);
@@ -101,11 +101,12 @@ export const useCartStore = create<CartState>()(
       store: undefined,
       addItem: (input) =>
         set((state) => {
-          const item: CartItem = {
-            ...input,
-            id: uuid(),
-            createdAt: Date.now(),
-          };
+          const item: CartItem = { ...input, id: uuid(), createdAt: Date.now() };
+          // Auto-apply promotion if parseable and qty already qualifies.
+          if (item.promotion && item.unitPrice != null) {
+            const promo = parsePromotion(item.promotion, item.unitPrice, item.quantity);
+            if (promo) item.promotionApplied = true;
+          }
           const items = [...state.items, item];
           // Auto-start a trip on first item if user skipped the "開始購物"
           // button — keeps the data clean without forcing the flow.
@@ -119,9 +120,17 @@ export const useCartStore = create<CartState>()(
         }),
       updateItem: (id, patch) =>
         set((state) => {
-          const items = state.items.map((item) =>
-            item.id === id ? { ...item, ...patch } : item,
-          );
+          const items = state.items.map((item) => {
+            if (item.id !== id) return item;
+            const updated = { ...item, ...patch };
+            // Re-evaluate promotion when quantity changes — auto-on when qty
+            // qualifies, auto-off when it drops below the threshold.
+            if (patch.quantity !== undefined && updated.promotion && updated.unitPrice != null) {
+              const promo = parsePromotion(updated.promotion, updated.unitPrice, updated.quantity);
+              updated.promotionApplied = !!promo;
+            }
+            return updated;
+          });
           return { items, total: computeTotal(items), updatedAt: Date.now() };
         }),
       clear: () =>
@@ -216,6 +225,21 @@ export const useCartStore = create<CartState>()(
     {
       name: 'cart:current',
       storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        // Re-evaluate promotionApplied for every item on hydration, so items
+        // that qualify but had promotionApplied=false (e.g. from old data) get
+        // auto-applied without requiring a qty tap.
+        const items = state.items.map((item) => {
+          if (item.promotion && item.unitPrice != null) {
+            const promo = parsePromotion(item.promotion, item.unitPrice, item.quantity);
+            if (promo && !item.promotionApplied) return { ...item, promotionApplied: true };
+          }
+          return item;
+        });
+        state.items = items;
+        state.total = computeTotal(items);
+      },
       partialize: (state) => ({
         id: state.id,
         items: state.items,

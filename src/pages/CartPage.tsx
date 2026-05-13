@@ -410,19 +410,23 @@ function PromotionToggle({
     ? t('cart.promotion.applied', { savings: discountText })
     : t('cart.promotion.apply', { savings: discountText });
 
-  // When parseable: pill shows the actionable savings amount only; the
-  // verbatim OCR text goes into title (and is still visible on the price tag
-  // the user just saw). Two-piece layout was too crowded on mobile.
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className={`mt-1 inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold leading-none transition ${tone}`}
-      title={item.promotion}
-    >
-      <TIcon name={applied ? 'check' : 'sparkle'} size={10} strokeWidth={2.4} />
-      <span>{label}</span>
-    </button>
+    <div className="mt-1 flex flex-col gap-0.5">
+      {/* Info line: verbatim OCR promotion text */}
+      <span className="inline-flex items-center gap-1 text-[10px] leading-none text-ink-60">
+        <TIcon name="tag" size={9} strokeWidth={2.2} className="shrink-0" />
+        {item.promotion}
+      </span>
+      {/* Action pill: toggle apply/un-apply */}
+      <button
+        type="button"
+        onClick={onToggle}
+        className={`inline-flex w-fit items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold leading-none transition ${tone}`}
+      >
+        <TIcon name={applied ? 'check' : 'sparkle'} size={10} strokeWidth={2.4} />
+        <span>{label}</span>
+      </button>
+    </div>
   );
 }
 
