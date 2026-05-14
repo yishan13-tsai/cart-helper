@@ -39,3 +39,4 @@ workbox-*.js
 .claude/skills/
 .factory/
 skills-lock.json
+.claude/settings.local.json
