@@ -104,6 +104,9 @@
       "apply": "Save {{savings}}",
       "applied": "Saved {{savings}}",
       "unsupported": "Reference only — can't auto-compute"
+    },
+    "currency": {
+      "base": "Base"
     }
   },
   "receipt": {

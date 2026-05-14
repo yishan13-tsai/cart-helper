@@ -1,16 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useCartStore, type PendingItem } from '../store/cart';
 import { useFxAll, TRAVEL_CURRENCIES } from '../hooks/useFxAll';
+import { useBaseCurrency } from '../hooks/useBaseCurrency';
 import { useBudget, classifyBudget } from '../hooks/useBudget';
 import { usePriceTrend } from '../hooks/usePriceTrend';
 import { parsePromotion } from '../lib/promotion';
 import { formatAmount } from '../lib/format';
+import { fetchRates, convert, normalizeCurrency } from '../lib/fx';
+import type { RateTable } from '../lib/fx';
 import { RoundButton } from '../components/RoundButton';
 import { Btn } from '../components/Btn';
 import { TIcon } from '../components/TIcon';
 import type { CartItem } from '../types';
+import type { Currency } from '../types';
 
 type TFn = ReturnType<typeof useTranslation>['t'];
 
@@ -42,6 +46,7 @@ export function CartPage() {
   const endTrip = useCartStore((s) => s.endTrip);
   const startedAt = useCartStore((s) => s.startedAt);
 
+  const setCurrency = useCartStore((s) => s.setCurrency);
   const fxAll = useFxAll(total, currency);
   const [budget] = useBudget();
   const budgetState = classifyBudget(total, budget);
@@ -58,7 +63,7 @@ export function CartPage() {
         <span className="text-[11px] font-bold tracking-[4px] text-ink-60 uppercase">
           CART HELPER
         </span>
-        <div className="h-9 w-9" aria-hidden />
+        <CurrencyPicker currency={currency} onSelect={setCurrency} />
       </div>
 
       {/* Title block — count = distinct products. Filter chip removed; with
@@ -599,6 +604,105 @@ function QuantityStepper({
       >
         <TIcon name="plus" size={12} strokeWidth={2.4} />
       </button>
+    </div>
+  );
+}
+
+function formatRate(rate: number): string {
+  if (rate >= 100) return Math.round(rate).toLocaleString();
+  if (rate >= 1) return rate.toFixed(2);
+  if (rate >= 0.1) return rate.toFixed(3);
+  return rate.toFixed(4);
+}
+
+function CurrencyPicker({
+  currency,
+  onSelect,
+}: {
+  currency: Currency;
+  onSelect: (c: Currency) => void;
+}) {
+  const { t } = useTranslation();
+  const [base] = useBaseCurrency();
+  const [open, setOpen] = useState(false);
+  const [table, setTable] = useState<RateTable | null>(null);
+
+  useEffect(() => {
+    fetchRates(normalizeCurrency(base))
+      .then(setTable)
+      .catch(() => {});
+  }, [base]);
+
+  const sym = currencySymbol(t, currency);
+  const baseSym = currencySymbol(t, base);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex h-9 items-center gap-1 rounded-full bg-surface px-3 text-[12px] font-bold text-page active:brightness-95"
+      >
+        <span>{sym}</span>
+        <span className="font-mono text-[10px] opacity-70">{currency}</span>
+        <TIcon
+          name="chev"
+          size={11}
+          strokeWidth={2.2}
+          className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full z-20 mt-1.5 w-52 overflow-hidden rounded-2xl bg-white shadow-nav">
+            {TRAVEL_CURRENCIES.map((c) => {
+              const isSelected = c === currency;
+              const cSym = currencySymbol(t, c);
+              let rateLabel = '';
+              if (c === base) {
+                rateLabel = t('cart.currency.base', '基準');
+              } else if (table) {
+                try {
+                  const rate = convert(1, c, base, table);
+                  rateLabel = `1${cSym} ≈ ${baseSym}${formatRate(rate)}`;
+                } catch {
+                  rateLabel = '—';
+                }
+              } else {
+                rateLabel = '…';
+              }
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => { onSelect(c as Currency); setOpen(false); }}
+                  className={`flex w-full items-center gap-2.5 border-t border-ink/5 px-3.5 py-2.5 text-left first:border-t-0 transition-colors ${
+                    isSelected ? 'bg-surface' : 'active:bg-ink-10/40'
+                  }`}
+                >
+                  <div
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                      isSelected ? 'border-page bg-page' : 'border-ink-30'
+                    }`}
+                  >
+                    {isSelected && (
+                      <TIcon name="check" size={9} strokeWidth={3} className="text-white" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[13px] font-semibold text-ink">
+                      {cSym}&nbsp;<span className="font-mono text-[11px]">{c}</span>
+                    </div>
+                    <div className="text-[10px] text-ink-60">{rateLabel}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }

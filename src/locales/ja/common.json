@@ -104,6 +104,9 @@
       "apply": "{{savings}} お得",
       "applied": "{{savings}} お得",
       "unsupported": "参考のみ — 自動計算不可"
+    },
+    "currency": {
+      "base": "基準通貨"
     }
   },
   "receipt": {

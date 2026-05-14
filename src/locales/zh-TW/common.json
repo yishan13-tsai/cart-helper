@@ -104,6 +104,9 @@
       "apply": "套用省 {{savings}}",
       "applied": "已省 {{savings}}",
       "unsupported": "僅供參考，無法自動計算"
+    },
+    "currency": {
+      "base": "基準幣別"
     }
   },
   "receipt": {

@@ -104,6 +104,9 @@
       "apply": "{{savings}} 절약",
       "applied": "{{savings}} 절약됨",
       "unsupported": "참고용 — 자동 계산 불가"
+    },
+    "currency": {
+      "base": "기준 통화"
     }
   },
   "receipt": {
