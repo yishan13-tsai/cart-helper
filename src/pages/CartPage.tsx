@@ -319,6 +319,7 @@ function ItemCard({
 }) {
   const { t } = useTranslation();
   const trend = usePriceTrend(item);
+  const [preview, setPreview] = useState(false);
 
   const unit = t('common.unit.itemUnit', '件');
   const priceText =
@@ -334,14 +335,45 @@ function ItemCard({
     item.originalUnitPrice !== item.unitPrice;
 
   return (
-    <div className="flex items-center gap-3 rounded-[18px] bg-white p-3 shadow-card">
-      {/* Thumbnail */}
-      {item.thumbnailUrl ? (
+    <>
+    {/* Fullscreen image preview */}
+    {preview && item.thumbnailUrl && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+        onClick={() => setPreview(false)}
+      >
         <img
           src={item.thumbnailUrl}
-          alt=""
-          className="h-12 w-12 flex-shrink-0 rounded-[14px] object-cover"
+          alt={item.name}
+          className="max-h-[85dvh] max-w-[92vw] rounded-2xl object-contain shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
         />
+        <button
+          type="button"
+          onClick={() => setPreview(false)}
+          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white active:bg-white/20"
+          aria-label={t('common.close')}
+        >
+          <TIcon name="x" size={16} strokeWidth={2.2} />
+        </button>
+      </div>
+    )}
+
+    <div className="flex items-center gap-3 rounded-[18px] bg-white p-3 shadow-card">
+      {/* Thumbnail — tappable when image exists */}
+      {item.thumbnailUrl ? (
+        <button
+          type="button"
+          onClick={() => setPreview(true)}
+          className="shrink-0 active:opacity-80"
+          aria-label="放大圖片"
+        >
+          <img
+            src={item.thumbnailUrl}
+            alt=""
+            className="h-12 w-12 rounded-[14px] object-cover"
+          />
+        </button>
       ) : (
         <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[14px] bg-surface text-page">
           <TIcon name="cart" size={22} />
@@ -396,6 +428,7 @@ function ItemCard({
         <TIcon name="trash" size={14} />
       </button>
     </div>
+    </>
   );
 }
 
