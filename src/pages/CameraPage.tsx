@@ -29,10 +29,9 @@ async function blobToDataURL(blob: Blob): Promise<string> {
   });
 }
 
-// Compact (~96px long edge, q=0.7) thumbnail data URL for storing alongside
-// each cart item. Keep it small — localStorage caps at a few MB and we may
-// have many cart items per session. Falls back to the full-size data URL on
-// browsers without canvas (effectively never in target devices).
+// Thumbnail stored with each cart item. 320px long edge is large enough for
+// the fullscreen preview while staying ~20–40 KB per image (acceptable for
+// localStorage even with 20+ items in a session).
 async function makeThumbnailDataURL(blob: Blob): Promise<string> {
   if (typeof document === 'undefined' || typeof createImageBitmap !== 'function') {
     return blobToDataURL(blob);
@@ -40,7 +39,7 @@ async function makeThumbnailDataURL(blob: Blob): Promise<string> {
   const bitmap = await createImageBitmap(blob);
   try {
     const longEdge = Math.max(bitmap.width, bitmap.height);
-    const scale = longEdge > 96 ? 96 / longEdge : 1;
+    const scale = longEdge > 320 ? 320 / longEdge : 1;
     const w = Math.max(1, Math.round(bitmap.width * scale));
     const h = Math.max(1, Math.round(bitmap.height * scale));
     const canvas = document.createElement('canvas');
@@ -49,7 +48,7 @@ async function makeThumbnailDataURL(blob: Blob): Promise<string> {
     const ctx = canvas.getContext('2d');
     if (!ctx) return blobToDataURL(blob);
     ctx.drawImage(bitmap, 0, 0, w, h);
-    return canvas.toDataURL('image/jpeg', 0.7);
+    return canvas.toDataURL('image/jpeg', 0.82);
   } finally {
     bitmap.close();
   }
