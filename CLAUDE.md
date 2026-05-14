@@ -4,12 +4,24 @@ NURIE.AI 2026 Cross-Platform Innovation Awards 參賽作品。
 購物車助手：拍照辨識商品 → 即時計算金額 → **匯率即時換算** → 拍收據對照差異。
 
 ## 比賽要點
-- **報名截止**: 2026-04-30
+- **比賽 repo**: https://github.com/NURIE-AI/visionary-ai-2026
+- **報名截止**: 2026-04-30（FAQ 說提交截止前都還可以報名）
 - **作品提交**: 2026-05-25
 - **Demo Day**: 2026-06-06
+- **資格**: 台灣或韓國居民，18 歲以上，個人參賽
 - **平台**: Web App (PWA)
 - **評分**: Tech 45% / Creativity 40% / Business 15%
+  - Tech：系統穩定性、功能完整度、安全實作
+  - Creativity：VaultSage API 的創意應用
+  - Business：商業可擴展性
 - **必要**: 使用 VaultSage Server-side API + 社群貼文標 `#vaultsage`
+- **獎項**:
+  - 第 1–3 名：Mac mini
+  - AI's Choice Award：iPad
+  - 第 4–10 名：$500 USD 折扣券
+  - 完賽者：完賽證書
+- **著作權**: 參賽者保留完整著作權，授予 NURIE.AI 非獨家宣傳使用權
+- **聯絡**: ai@nurie.ai
 
 ## 技術棧
 - Vite + React 18 + TypeScript
