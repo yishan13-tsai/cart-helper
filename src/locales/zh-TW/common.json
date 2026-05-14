@@ -259,7 +259,18 @@
     "empty": {
       "subtitle": "出門前先列好，到店掃描會自動打勾"
     },
-    "clearDone": "清除已完成（{{n}} 項）"
+    "clearDone": "清除已完成（{{n}} 項）",
+    "ai": {
+      "toggle": "AI 解析",
+      "placeholder": "貼上或輸入清單文字，例如：牛奶 2瓶、衛生紙、洗髮精",
+      "parse": "解析",
+      "parsing": "辨識中…",
+      "confirm": "找到 {{n}} 項商品",
+      "cancel": "取消",
+      "addAll": "全部加入",
+      "error": "解析失敗，請再試一次",
+      "empty": "沒找到商品，請換個寫法"
+    }
   },
   "common": {
     "scan": "掃描",

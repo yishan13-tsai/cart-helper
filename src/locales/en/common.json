@@ -259,7 +259,18 @@
     "empty": {
       "subtitle": "Add items before your trip and they'll be checked off when scanned"
     },
-    "clearDone": "Clear done ({{n}})"
+    "clearDone": "Clear done ({{n}})",
+    "ai": {
+      "toggle": "AI Parse",
+      "placeholder": "Paste or type your list, e.g. milk x2, toilet paper, shampoo",
+      "parse": "Parse",
+      "parsing": "Parsing…",
+      "confirm": "Found {{n}} item(s)",
+      "cancel": "Cancel",
+      "addAll": "Add All",
+      "error": "Parse failed, please try again",
+      "empty": "No items found — try rephrasing"
+    }
   },
   "common": {
     "scan": "Scan",
