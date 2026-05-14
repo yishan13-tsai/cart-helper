@@ -2,19 +2,16 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useCartStore, type PendingItem } from '../store/cart';
-import { useFxAll, TRAVEL_CURRENCIES } from '../hooks/useFxAll';
 import { useBaseCurrency } from '../hooks/useBaseCurrency';
 import { useBudget, classifyBudget } from '../hooks/useBudget';
 import { usePriceTrend } from '../hooks/usePriceTrend';
 import { parsePromotion } from '../lib/promotion';
 import { formatAmount } from '../lib/format';
-import { fetchRates, convert, normalizeCurrency } from '../lib/fx';
-import type { RateTable } from '../lib/fx';
+import { fetchRates, convert } from '../lib/fx';
 import { RoundButton } from '../components/RoundButton';
 import { Btn } from '../components/Btn';
 import { TIcon } from '../components/TIcon';
 import type { CartItem } from '../types';
-import type { Currency } from '../types';
 
 type TFn = ReturnType<typeof useTranslation>['t'];
 
@@ -46,13 +43,28 @@ export function CartPage() {
   const endTrip = useCartStore((s) => s.endTrip);
   const startedAt = useCartStore((s) => s.startedAt);
 
-  const setCurrency = useCartStore((s) => s.setCurrency);
-  const fxAll = useFxAll(total, currency);
+  const [base] = useBaseCurrency();
   const [budget] = useBudget();
   const budgetState = classifyBudget(total, budget);
 
   const symbol = currencySymbol(t, currency);
-  const showFxBar = items.length > 0;
+  const baseSymbol = currencySymbol(t, base);
+
+  // Single FX conversion: cart currency → user's home currency
+  const [fxConverted, setFxConverted] = useState<number | null>(null);
+  const [fxLoading, setFxLoading] = useState(false);
+  const [fxStale, setFxStale] = useState(false);
+  useEffect(() => {
+    if (currency === base || total === 0) { setFxConverted(null); return; }
+    setFxLoading(true);
+    fetchRates(base)
+      .then((table) => {
+        setFxStale(!!(table as { stale?: boolean }).stale);
+        setFxConverted(Math.round(convert(total, currency, base, table)));
+      })
+      .catch(() => setFxConverted(null))
+      .finally(() => setFxLoading(false));
+  }, [total, currency, base]);
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-bg">
@@ -63,7 +75,7 @@ export function CartPage() {
         <span className="text-[11px] font-bold tracking-[4px] text-ink-60 uppercase">
           CART HELPER
         </span>
-        <CurrencyPicker currency={currency} onSelect={setCurrency} />
+        <div className="h-9 w-9" aria-hidden />
       </div>
 
       {/* Title block — count = distinct products. Filter chip removed; with
@@ -132,7 +144,7 @@ export function CartPage() {
       <div className="shrink-0 px-4 pb-10 pt-2">
         <div className="rounded-3xl bg-white p-4 shadow-nav">
         {/* Total row */}
-        <div className="mb-3 flex items-baseline justify-between">
+        <div className="mb-3 flex items-center justify-between gap-3">
           <span
             className={`font-num text-2xl font-extrabold ${
               budgetState === 'over' ? 'text-alert' : 'text-ink'
@@ -143,8 +155,17 @@ export function CartPage() {
             {total.toLocaleString()}
           </span>
 
-          {/* Multi-currency FX row */}
-          {showFxBar && <FxBar fxAll={fxAll} cartCurrency={currency} t={t} />}
+          {/* Single FX chip: cart currency → home currency */}
+          {currency !== base && items.length > 0 && (
+            <span className="shrink-0 rounded-full bg-surface px-2.5 py-1 text-sm font-semibold text-page">
+              {fxLoading && fxConverted == null
+                ? '…'
+                : fxConverted != null
+                ? `≈ ${baseSymbol}${fxConverted.toLocaleString()}`
+                : '—'}
+              {fxStale && <span className="ml-1 text-[9px] font-bold opacity-50">{'~'}</span>}
+            </span>
+          )}
         </div>
 
         {/* Budget bar — shown only when user set one */}
@@ -608,144 +629,6 @@ function QuantityStepper({
   );
 }
 
-function formatRate(rate: number): string {
-  if (rate >= 100) return Math.round(rate).toLocaleString();
-  if (rate >= 1) return rate.toFixed(2);
-  if (rate >= 0.1) return rate.toFixed(3);
-  return rate.toFixed(4);
-}
-
-function CurrencyPicker({
-  currency,
-  onSelect,
-}: {
-  currency: Currency;
-  onSelect: (c: Currency) => void;
-}) {
-  const { t } = useTranslation();
-  const [base] = useBaseCurrency();
-  const [open, setOpen] = useState(false);
-  const [table, setTable] = useState<RateTable | null>(null);
-
-  useEffect(() => {
-    fetchRates(normalizeCurrency(base))
-      .then(setTable)
-      .catch(() => {});
-  }, [base]);
-
-  const sym = currencySymbol(t, currency);
-  const baseSym = currencySymbol(t, base);
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="flex h-9 items-center gap-1 rounded-full bg-surface px-3 text-[12px] font-bold text-page active:brightness-95"
-      >
-        <span>{sym}</span>
-        <span className="font-mono text-[10px] opacity-70">{currency}</span>
-        <TIcon
-          name="chev"
-          size={11}
-          strokeWidth={2.2}
-          className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
-        />
-      </button>
-
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full z-20 mt-1.5 w-52 overflow-hidden rounded-2xl bg-white shadow-nav">
-            {TRAVEL_CURRENCIES.map((c) => {
-              const isSelected = c === currency;
-              const cSym = currencySymbol(t, c);
-              let rateLabel = '';
-              if (c === base) {
-                rateLabel = t('cart.currency.base', '基準');
-              } else if (table) {
-                try {
-                  const rate = convert(1, c, base, table);
-                  rateLabel = `1${cSym} ≈ ${baseSym}${formatRate(rate)}`;
-                } catch {
-                  rateLabel = '—';
-                }
-              } else {
-                rateLabel = '…';
-              }
-              return (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => { onSelect(c as Currency); setOpen(false); }}
-                  className={`flex w-full items-center gap-2.5 border-t border-ink/5 px-3.5 py-2.5 text-left first:border-t-0 transition-colors ${
-                    isSelected ? 'bg-surface' : 'active:bg-ink-10/40'
-                  }`}
-                >
-                  <div
-                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                      isSelected ? 'border-page bg-page' : 'border-ink-30'
-                    }`}
-                  >
-                    {isSelected && (
-                      <TIcon name="check" size={9} strokeWidth={3} className="text-white" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[13px] font-semibold text-ink">
-                      {cSym}&nbsp;<span className="font-mono text-[11px]">{c}</span>
-                    </div>
-                    <div className="text-[10px] text-ink-60">{rateLabel}</div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-function FxBar({
-  fxAll,
-  cartCurrency,
-  t,
-}: {
-  fxAll: ReturnType<typeof useFxAll>;
-  cartCurrency: string;
-  t: TFn;
-}) {
-  const targets = TRAVEL_CURRENCIES.filter((c) => c !== cartCurrency);
-  if (targets.length === 0) return null;
-
-  return (
-    <div className="mb-3 flex items-center gap-2">
-      {fxAll.stale && (
-        <span className="text-[10px] text-ink-30">{t('cart.fxStale')}</span>
-      )}
-      {targets.map((code) => {
-        const amount = fxAll.amounts[code];
-        const sym = currencySymbol(t, code);
-        return (
-          <span
-            key={code}
-            className="inline-flex items-center gap-0.5 rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold text-page"
-          >
-            {fxAll.loading && amount == null ? (
-              <span className="text-ink-30">…</span>
-            ) : amount == null ? (
-              <span className="text-ink-30">—</span>
-            ) : (
-              <>≈&nbsp;{sym}{formatAmount(amount, 'en')}</>
-            )}
-            <span className="ml-0.5 text-[9px] font-bold opacity-50">{code}</span>
-          </span>
-        );
-      })}
-    </div>
-  );
-}
 
 function BudgetBar({
   total,

@@ -111,7 +111,13 @@ export const useCartStore = create<CartState>()(
           // Auto-start a trip on first item if user skipped the "開始購物"
           // button — keeps the data clean without forcing the flow.
           const startedAt = state.startedAt || Date.now();
-          return { items, total: computeTotal(items), updatedAt: Date.now(), startedAt };
+          // Auto-set cart currency from the first item's OCR-detected currency
+          // so the subtotal always shows the local currency (e.g. ¥ in Japan).
+          const currency =
+            state.items.length === 0 && input.currency
+              ? input.currency
+              : state.currency;
+          return { items, total: computeTotal(items), updatedAt: Date.now(), startedAt, currency };
         }),
       removeItem: (id) =>
         set((state) => {
