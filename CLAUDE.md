@@ -92,6 +92,7 @@ NURIE.AI 2026 Cross-Platform Innovation Awards 參賽作品。
 ## 開發守則
 - TypeScript strict mode
 - 不放秘密到 git，用 `.env.local`
+- **git push 前必須先跑 `pnpm build`，build 失敗不可 push**
 - PR 前跑 `pnpm typecheck && pnpm test`
 - UI 改動要在瀏覽器實測（用 agent-browser）
 - **技術架構決策一律寫進本檔的「架構決策」章節**，不要散落在 commit message 或臨時筆記裡
