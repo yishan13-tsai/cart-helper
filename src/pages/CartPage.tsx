@@ -50,19 +50,24 @@ export function CartPage() {
   const symbol = currencySymbol(t, currency);
   const baseSymbol = currencySymbol(t, base);
 
-  // Single FX conversion: cart currency → user's home currency
+  // FX: cart currency → user's home currency.
+  // rateToBase = how many base units per 1 cart-currency unit (e.g. 0.222 TWD/JPY)
   const [fxConverted, setFxConverted] = useState<number | null>(null);
+  const [rateToBase, setRateToBase] = useState<number | null>(null);
   const [fxLoading, setFxLoading] = useState(false);
   const [fxStale, setFxStale] = useState(false);
   useEffect(() => {
-    if (currency === base || total === 0) { setFxConverted(null); return; }
+    if (currency === base) { setFxConverted(null); setRateToBase(null); return; }
+    if (total === 0) { setFxConverted(null); }
     setFxLoading(true);
     fetchRates(base)
       .then((table) => {
         setFxStale(!!(table as { stale?: boolean }).stale);
-        setFxConverted(Math.round(convert(total, currency, base, table)));
+        const rate = convert(1, currency, base, table);
+        setRateToBase(rate);
+        if (total > 0) setFxConverted(Math.round(total * rate));
       })
-      .catch(() => setFxConverted(null))
+      .catch(() => { setFxConverted(null); setRateToBase(null); })
       .finally(() => setFxLoading(false));
   }, [total, currency, base]);
 
@@ -117,6 +122,8 @@ export function CartPage() {
             key={item.id}
             item={item}
             symbol={symbol}
+            baseSymbol={baseSymbol}
+            rateToBase={rateToBase}
             unknownPriceLabel={t('cart.item.unknownPrice')}
             removeLabel={t('cart.item.remove')}
             onRemove={() => removeItem(item.id)}
@@ -299,6 +306,8 @@ function EmptyState({ title, subtitle }: { title: string; subtitle: string }) {
 function ItemCard({
   item,
   symbol,
+  baseSymbol,
+  rateToBase,
   unknownPriceLabel,
   removeLabel,
   onRemove,
@@ -309,6 +318,8 @@ function ItemCard({
 }: {
   item: CartItem;
   symbol: string;
+  baseSymbol: string;
+  rateToBase: number | null;
   unknownPriceLabel: string;
   removeLabel: string;
   onRemove: () => void;
@@ -395,6 +406,13 @@ function ItemCard({
           onChange={onPriceChange}
           onRevert={onPriceRevert}
         />
+
+        {/* Per-item home-currency conversion */}
+        {rateToBase != null && item.unitPrice != null && (
+          <span className="mt-0.5 inline-flex items-center rounded-full bg-surface px-2 py-0.5 text-[10px] font-semibold text-page">
+            ≈&nbsp;{baseSymbol}{Math.round(item.unitPrice * rateToBase).toLocaleString()}
+          </span>
+        )}
 
         {/* Promotion toggle — actionable pill (apply / un-apply discount) */}
         {item.promotion && (
