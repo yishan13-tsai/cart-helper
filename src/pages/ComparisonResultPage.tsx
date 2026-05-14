@@ -126,7 +126,7 @@ export function ComparisonResultPage() {
   const entry = useHistoryStore((s) => (id ? s.getEntry(id) : undefined));
   const clearCart = useCartStore((s) => s.clear);
 
-  if (!entry || !entry.comparison) {
+  if (!entry) {
     return (
       <section className="flex h-full flex-col items-center justify-center p-8 text-center">
         <h2 className="text-xl font-bold text-ink-60">
@@ -136,6 +136,43 @@ export function ComparisonResultPage() {
           {t('history.notFound.cta')}
         </Link>
       </section>
+    );
+  }
+
+  // Entry exists but no receipt comparison — show cart-only read-only view.
+  if (!entry.comparison) {
+    const c = entry.cart;
+    const sym = currencySymbol(c.currency);
+    const storeName = c.store ?? t('history.entry.defaultStore');
+    return (
+      <div className="flex min-h-full flex-col bg-bg text-ink">
+        <header className="flex items-center justify-between px-4 pt-4 pb-3">
+          <RoundButton icon="chevL" onClick={() => navigate(-1)} aria-label="back" />
+          <span className="text-[11px] font-extrabold tracking-[0.18em] text-ink-60 uppercase">CART HELPER</span>
+          <div className="h-9 w-9" aria-hidden />
+        </header>
+        <div className="px-5 pb-3">
+          <h1 className="text-xl font-bold text-ink">{storeName}</h1>
+          <p className="mt-0.5 text-xs text-ink-60">
+            {fmtDate(c.startedAt ?? entry.savedAt)} · {t('cart.items_count', { n: c.items.length })} · {sym}{formatAmount(c.total, i18n.language)}
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 px-4 pb-24">
+          {c.items.map((item) => {
+            const itemSym = currencySymbol(item.currency ?? c.currency);
+            const lineTotal = item.unitPrice == null ? null : item.unitPrice * item.quantity;
+            return (
+              <div key={item.id} className="flex items-center justify-between rounded-[14px] bg-white px-3.5 py-3 shadow-card">
+                <span className="mr-3 min-w-0 flex-1 truncate text-sm font-semibold text-ink">{item.name}</span>
+                <span className="shrink-0 text-xs text-ink-60">×{item.quantity}</span>
+                <span className="ml-3 shrink-0 font-num text-sm font-bold text-ink">
+                  {lineTotal == null ? '—' : `${itemSym}${formatAmount(lineTotal, i18n.language)}`}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     );
   }
 
