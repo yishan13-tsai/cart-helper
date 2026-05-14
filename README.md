@@ -1,141 +1,125 @@
-# 血拼小幫手 / ShopBuddy
+# 血拼小幫手 / Cart Helper
 
-> NURIE.AI 2026 Cross-Platform Innovation Awards entry
+> NURIE.AI 2026 Cross-Platform Innovation Awards 參賽作品
 >
 > **Tagline**: 逛街有伴，結帳不慌 · Shop smart. Check twice.
 
-A PWA shopping companion. Photograph items as you go → AI builds your cart with names, prices, and quantities → live total + cross-currency preview → photograph the receipt at checkout → see a three-section verdict (matched / missing / extra) so you never wonder "did they ring me up right?" again.
+一款專為旅遊購物設計的 PWA，解決「出國逛街算不清楚花了多少錢」的痛點。
 
-## Status
+拍照辨識商品 → 購物車即時計算 + 匯率換算 → 掃收據對照差異
 
-Feature-complete v1. 60/60 tests pass. Bundle: 382 KB JS / 121 KB gzip. Four locales (zh-TW · en · ko · ja).
+---
 
-⚠️ **Demo blocker**: see [`docs/CRITICAL_ISSUES.md`](docs/CRITICAL_ISSUES.md). The current VaultSage API key bleeds unrelated files into OCR results — must swap to a dedicated hackathon account before demo day.
+## 功能總覽
 
-## Tech stack
+### 拍照辨識商品
+對準價格標籤按快門，VaultSage AI（RAG 模式）自動抓取品名、單價、數量、幣別、促銷文字，加入購物車。辨識期間可繼續拍下一張，不需等待。
 
-- **Build**: Vite 5 + React 18 + TypeScript (strict)
-- **Styling**: Tailwind 3 + JetBrains Mono for amounts + Noto Sans CJK for body
-- **State**: Zustand with `persist` (cart + history both survive reloads)
-- **i18n**: react-i18next (4 locales, auto-detect → localStorage → fallback `zh-TW`)
-- **PWA**: vite-plugin-pwa (autoUpdate, full precache)
-- **API**: VaultSage Server-side API (chat v2 + file upload)
-- **FX**: fawazahmed0 currency-api via jsDelivr (Cloudflare Pages mirror fallback)
+### 購物車
+- **即時小計**：每件商品可點擊修改單價，支援還原 OCR 原始值
+- **匯率換算**：OCR 自動辨識幣別（¥ → JPY）；購物車小計與每件商品下方同步顯示換算成主幣別的金額（由 Settings 設定）
+- **促銷自動套用**：解析「第 2 件 6 折 / 兩件 99 / 買一送一」等優惠字串，點擊 pill 套用折扣
+- **歷史比價警示**：比對近期購物紀錄，漲價 / 降價以顏色 pill 標示
+- **預算提醒**：超過 80% 顯示警告，超支變紅
 
-## Setup
+### 收據對照
+結帳後掃收據，AI 比對購物車 vs 發票，分四類標示：相符 / 價差 / 收據少了 / 多收了。差額自動計算。
+
+### 購物清單
+- 出發前手動加入商品；到店掃描到後自動打勾
+- **AI 解析**：貼上或輸入自由文字（「牛奶 2 瓶、衛生紙、洗髮精」），VaultSage 解析後批次加入
+
+### 購物紀錄
+每次購物存檔。可回顧品項明細；有收據對照的顯示差異統計，沒對照的顯示購物清單。
+
+---
+
+## 技術棧
+
+| 項目 | 選擇 |
+|---|---|
+| Build | Vite 5 + React 18 + TypeScript (strict) |
+| Styling | Tailwind 3 · 8 主題 CSS token 系統 |
+| State | Zustand + persist（cart / history / list 存活於 reload）|
+| i18n | react-i18next · zh-TW / en / ko / ja 四語系 |
+| PWA | vite-plugin-pwa（autoUpdate, full precache）|
+| AI / OCR | VaultSage Server-side API（chat v2 RAG 模式 + file upload）|
+| FX | fawazahmed0 currency-api（ECB 每日匯率，localStorage 快取）|
+| 安全 | Express BFF proxy（`server/index.js`）· API Key 不落地 browser |
+
+---
+
+## 架構說明
+
+```
+Browser  ──→  Vite SPA (dist/)
+                  ↓ /api/v1/*
+             Express BFF (server/index.js)
+                  ↓ X-Api-Key injected server-side
+             VaultSage API (api.vaultsage.ai)
+```
+
+BFF 代理 `/api/v1/*` 並注入 `VAULTSAGE_API_KEY`（Render 環境變數），API Key 從不進入 client bundle。開發環境由 `vite.config.ts` 的 `server.proxy` 處理，體驗一致。
+
+---
+
+## 本地開發
 
 ```bash
 pnpm install
-cp .env.example .env.local      # fill in VITE_VAULTSAGE_API_KEY
-pnpm dev                         # http://localhost:5180/
+cp .env.example .env.local   # 填入 VAULTSAGE_API_KEY
+pnpm dev                      # http://localhost:5180/
 ```
 
-Without an API key the app runs against in-process mock recognizers — useful for UI work and offline demos.
+```bash
+pnpm typecheck   # tsc --noEmit
+pnpm test        # vitest
+pnpm build       # typecheck + Vite production build
+```
 
-## Scripts
+---
 
-| Command | What it does |
+## 路由
+
+| Path | 頁面 |
 |---|---|
-| `pnpm dev` | Vite dev server on port 5180 (5173/5174 are reserved for other projects on this machine) |
-| `pnpm typecheck` | `tsc --noEmit` |
-| `pnpm test` | vitest run (60 tests) |
-| `pnpm build` | typecheck + Vite production build |
-| `pnpm preview` | preview the built `dist/` |
-| `bun run scripts/smoke-test.ts <image>` | live VaultSage e2e probe (needs `.env.local`) |
+| `/` | → redirect `/scan` |
+| `/scan` | 相機（掃商品）|
+| `/list` | 購物清單 + AI 解析 |
+| `/cart` | 購物車 + 匯率 + 促銷 |
+| `/history` | 購物紀錄 |
+| `/settings` | 語言 / 主幣別 / 主題 |
+| `/receipt/capture` | 相機（掃收據）|
+| `/receipt/comparison/:id` | 對照結果 |
 
-## Routes
+---
 
-| Path | Page | Purpose |
-|---|---|---|
-| `/` | CameraPage | Item-mode camera; tap shutter → OCR → confirm → add to cart |
-| `/cart` | CartPage | Running total + FX preview + editable items |
-| `/history` | HistoryPage | Past comparisons grouped by date |
-| `/settings` | SettingsPage | Language + base currency + clear actions |
-| `/receipt/capture` | ReceiptCapturePage | Receipt-mode camera; on capture → run comparison |
-| `/receipt/comparison/:id` | ComparisonResultPage | Three-section matched / missing / extra reveal |
+## 部署（Render）
 
-## Project layout
+1. 連結 GitHub repo
+2. `render.yaml` 自動設定 build / start / healthcheck
+3. 設定 env var：`VAULTSAGE_API_KEY`
+4. 驗證：`/healthz` 回傳 `{"ok":true,"hasApiKey":true}`
 
-```
-.claude/
-  agents/                 # 6 subagent definitions
-CLAUDE.md                 # team rules + API notes
-docs/                     # design, reports, screenshots
-  CRITICAL_ISSUES.md      # ⚠️ read this first
-  demo-script.md          # 3-minute demo, zh-TW + en
-  social-post.md          # #vaultsage post drafts
-  qa-report.md            # full QA + risk register
-  design-v0.md            # brand, palette, wireframes
-  week1-plan.md           # data model + sequencing decisions
-  fx-research.md          # why fawazahmed0 over frankfurter
-  lib-vaultsage-report.md # VaultSage client design notes
-  lib-fx-report.md        # FX client design notes
-  scaffold-report.md
-  i18n-report.md
-  camera-report.md
-  vaultsage-openapi.json  # cached API spec
-scripts/
-  smoke-test.ts           # live VaultSage probe
-  README.md
-src/
-  pages/                  # Camera, Cart, History, Settings, ReceiptCapture, ComparisonResult
-  components/             # CameraCapture, OcrConfirmModal, LocaleSwitcher
-  store/                  # cart (persist), history (persist)
-  hooks/                  # useBaseCurrency, useFxPreview
-  lib/
-    fx/                   # currency client + ISO whitelist + convert
-    vaultsage/            # client / files / chat / prompts / recognize / compare
-    recognizer.ts         # mock-or-real recognizer factory
-    compareReceiptRunner.ts
-    format.ts
-  i18n/                   # init, types, llm-locale helper
-  locales/{zh-TW,en,ko,ja}/common.json
-```
+---
 
-## Architecture
+## 提交 Checklist（截止 2026-05-25）
 
-The app is a Vite-built SPA served by a tiny Express BFF (`server/index.js`). The BFF:
-- Serves the static `dist/` with SPA fallback
-- Reverse-proxies `/api/v1/*` → `https://api.vaultsage.ai/api/v1/*`, injecting `X-Api-Key` server-side from `VAULTSAGE_API_KEY`
+- [ ] 專用 VaultSage hackathon 帳號建立並替換 API Key
+- [ ] `#vaultsage` 社群貼文發布
+- [ ] 實機測試（iPhone Safari + Android Chrome PWA 安裝）
+- [ ] Demo 影片錄製
+- [ ] 報名 / 提交表單填寫
 
-**Why a BFF, not pure static**: VaultSage's CORS allowlist only lets `localhost` call the API directly from a browser. Any deployed origin (Render, GitHub Pages, custom domain, LAN IP) gets blocked at preflight. The BFF makes server-side calls that bypass CORS entirely, and as a bonus the API key never reaches the browser.
+---
 
-In `pnpm dev`, Vite's dev server has the same `/api/v1` proxy wired in `vite.config.ts`, so the dev experience is identical without needing to run the Express server separately.
+## Demo Day（2026-06-06）
 
-## Deploy (Render Web Service)
+亮點場景：
+1. 拍照 → 商品即時加入購物車 + ¥ → NT$ 換算
+2. AI 購物清單解析（貼上文字批次加入）
+3. 掃收據 → 三欄對照差異報告
 
-`render.yaml` at the repo root is the IaC config.
+---
 
-1. https://dashboard.render.com/web/new
-2. Connect `yishan13-tsai/cart-helper`
-3. Render auto-detects `render.yaml`:
-   - Build command: `corepack enable && pnpm install --frozen-lockfile && pnpm build`
-   - Start command: `pnpm start`
-   - Health check: `/healthz`
-   - Node version: 20
-4. **Set the secret env var: `VAULTSAGE_API_KEY`** (paste your VaultSage personal key — no `VITE_` prefix)
-   - `VAULTSAGE_BASE_URL` is already set in `render.yaml`
-5. Click **Create Web Service** — first deploy takes ~3 minutes
-6. Open `/healthz` on the Render URL to confirm the BFF is up: `{"ok":true,"hasApiKey":true,...}`
-
-## Submission checklist (2026-05-25)
-
-- [ ] Dedicated VaultSage hackathon account created and wired
-- [ ] Repo pushed to GitHub (`gh repo create cart-helper --public`)
-- [ ] Deployed to Vercel
-- [ ] PWA installable on iPhone Safari + Android Chrome (real device test)
-- [ ] `#vaultsage` social post live + URL captured
-- [ ] Demo video recorded (per `docs/demo-script.md`)
-- [ ] Submission form filled
-
-## Demo day (2026-06-06)
-
-See [`docs/demo-script.md`](docs/demo-script.md) for scene-by-scene voiceover.
-Wow moments to defend:
-1. Live running total ticker (JetBrains Mono mono-width digits)
-2. FX cross-currency preview
-3. Three-section receipt comparison ⭐
-
-## License & credits
-
-Hackathon entry — license TBD pending submission rules. Powered by [VaultSage](https://vaultsage.ai). #vaultsage
+Powered by [VaultSage](https://vaultsage.ai) · #vaultsage
