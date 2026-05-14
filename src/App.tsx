@@ -32,7 +32,7 @@ export function App() {
   return (
     <div className="flex h-full flex-col">
       <EnvBanner />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden">
         <Outlet />
       </main>
       {!isFullscreen && <BottomNav />}

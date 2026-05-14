@@ -84,7 +84,7 @@ export function ListPage() {
   const checked = items.filter((i) => i.checked);
 
   return (
-    <div className="flex h-full flex-col bg-bg text-ink">
+    <div className="flex h-full flex-col overflow-x-hidden bg-bg text-ink">
       {/* Header */}
       <div className="shrink-0 px-5 pb-2 pt-5">
         <h1 className="text-2xl font-bold tracking-tight">{t('list.title')}</h1>
@@ -101,7 +101,7 @@ export function ListPage() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
             placeholder={t('list.add.placeholder')}
-            className="flex-1 rounded-xl border border-ink-10 bg-white px-3.5 py-2.5 text-sm font-medium text-ink placeholder:text-ink-30 focus:border-page/40 focus:outline-none focus:ring-2 focus:ring-page/20"
+            className="min-w-0 flex-1 rounded-xl border border-ink-10 bg-white px-3.5 py-2.5 text-sm font-medium text-ink placeholder:text-ink-30 focus:border-page/40 focus:outline-none focus:ring-2 focus:ring-page/20"
           />
           <button
             type="button"
@@ -129,7 +129,7 @@ export function ListPage() {
 
       {/* AI Panel */}
       {showAiPanel && (
-        <div className="shrink-0 mx-4 mb-3 rounded-2xl border border-page/20 bg-white p-3.5 shadow-sm">
+        <div className="shrink-0 mx-4 mb-3 min-w-0 rounded-2xl border border-page/20 bg-white p-3.5 shadow-sm">
           <textarea
             value={aiText}
             onChange={(e) => setAiText(e.target.value)}
