@@ -33,6 +33,7 @@
     "permission": {
       "requesting": "請求相機權限中…",
       "denied": "無法取得相機權限",
+      "deniedHint": "請到瀏覽器設定 → 網站設定 → 相機，允許本站存取，然後點「再試一次」",
       "cta": "改用相簿",
       "fallbackInput": "從相簿選一張照片",
       "retry": "再試一次"

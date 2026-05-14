@@ -33,6 +33,7 @@
     "permission": {
       "requesting": "Requesting camera access…",
       "denied": "Camera access denied",
+      "deniedHint": "Go to browser Settings → Site Settings → Camera, allow this site, then tap \"Try Again\"",
       "cta": "Use photo library",
       "fallbackInput": "Pick a photo from library",
       "retry": "Try again"

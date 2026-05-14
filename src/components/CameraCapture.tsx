@@ -21,6 +21,8 @@ export function CameraCapture({ onCapture, disabled, cropFraction = 0.70 }: Prop
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // Incrementing this triggers a fresh getUserMedia attempt (used by "retry" button).
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -32,6 +34,7 @@ export function CameraCapture({ onCapture, disabled, cropFraction = 0.70 }: Prop
         return;
       }
       setStatus('requesting');
+      setErrorMsg(null);
       try {
         const stream = await md.getUserMedia({
           video: { facingMode: { ideal: 'environment' } },
@@ -64,7 +67,7 @@ export function CameraCapture({ onCapture, disabled, cropFraction = 0.70 }: Prop
         streamRef.current = null;
       }
     };
-  }, []);
+  }, [retryCount]);
 
   function handleShutter() {
     const video = videoRef.current;
@@ -123,13 +126,23 @@ export function CameraCapture({ onCapture, disabled, cropFraction = 0.70 }: Prop
 
       {status === 'denied' && (
         <Overlay>
-          <p className="mb-3 text-sm">{t('camera.permission.denied')}</p>
+          <p className="mb-2 text-sm font-semibold">{t('camera.permission.denied')}</p>
+          <p className="mb-4 text-xs text-white/60">
+            {t('camera.permission.deniedHint')}
+          </p>
           {errorMsg && (
-            <p className="mb-3 text-2xs text-white/60">{errorMsg}</p>
+            <p className="mb-3 text-[10px] text-white/40">{errorMsg}</p>
           )}
           <button
             type="button"
-            className="mb-2 rounded-full bg-page px-5 py-2 text-sm font-bold text-white shadow-cta"
+            className="mb-2 w-full rounded-full bg-page px-5 py-2.5 text-sm font-bold text-white shadow-cta active:brightness-95"
+            onClick={() => setRetryCount((n) => n + 1)}
+          >
+            {t('camera.permission.retry')}
+          </button>
+          <button
+            type="button"
+            className="w-full rounded-full border border-white/30 px-5 py-2.5 text-sm font-semibold text-white/80 active:bg-white/10"
             onClick={() => fileInputRef.current?.click()}
           >
             {t('camera.permission.cta')}
