@@ -73,22 +73,43 @@ export function CameraCapture({ onCapture, disabled, cropFraction = 0.70 }: Prop
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
-    const w = video.videoWidth;
-    const h = video.videoHeight;
-    if (!w || !h) return;
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    if (!vw || !vh) return;
 
-    // Center-crop a square at cropFraction of the shorter video dimension —
-    // this matches the on-screen focus frame so what the user sees framed is
-    // what gets sent to OCR.
-    const cropSize = Math.round(Math.min(w, h) * cropFraction);
-    const sx = Math.round((w - cropSize) / 2);
-    const sy = Math.round((h - cropSize) / 2);
+    // The <video> is rendered with `object-cover`: it's scaled to fill the
+    // element and the overflow is cropped, centered. So the video's intrinsic
+    // pixels are NOT 1:1 with what's on screen — e.g. a landscape feed on a
+    // portrait phone shows only a narrow center strip. We must map the
+    // on-screen focus frame into source-video coordinates, or the capture
+    // grabs content outside the visible brackets (looks like "the whole screen").
+    const cw = video.clientWidth;
+    const ch = video.clientHeight;
+    if (!cw || !ch) return;
+
+    // object-cover scale + the displayed video's offset within the element.
+    const scale = Math.max(cw / vw, ch / vh);
+    const offX = (cw - vw * scale) / 2; // <= 0 on the cropped axis
+    const offY = (ch - vh * scale) / 2;
+
+    // Focus frame: a centered square. Side must match <FocusFrame/> below
+    // (70vmin, capped at 320 CSS px) so framing == capture.
+    const frameCss = Math.min(Math.min(cw, ch) * cropFraction, 320);
+    const frameLeft = (cw - frameCss) / 2;
+    const frameTop = (ch - frameCss) / 2;
+
+    // Element coords -> source-video coords, clamped to the source bounds.
+    const cropX = Math.max(0, Math.round((frameLeft - offX) / scale));
+    const cropY = Math.max(0, Math.round((frameTop - offY) / scale));
+    const cropSize = Math.round(
+      Math.min(frameCss / scale, vw - cropX, vh - cropY),
+    );
 
     canvas.width = cropSize;
     canvas.height = cropSize;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    ctx.drawImage(video, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
+    ctx.drawImage(video, cropX, cropY, cropSize, cropSize, 0, 0, cropSize, cropSize);
     canvas.toBlob(
       (blob) => {
         if (blob) onCapture(blob);
