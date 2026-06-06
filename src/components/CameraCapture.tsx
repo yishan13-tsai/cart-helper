@@ -120,15 +120,14 @@ export function CameraCapture({ onCapture, disabled, cropFraction = 0.70 }: Prop
     );
   }
 
-  async function handleFilePick(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFilePick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    // For file picks we also center-crop to a square at cropFraction —
-    // user usually frames the price tag in the middle of the photo, and the
-    // tighter crop reduces context the OCR model can hallucinate from.
-    const cropped = await centerCropImage(file, cropFraction).catch(() => null);
-    onCapture(cropped ?? file);
+    // Uploaded images are already framed by the user — send the original as-is,
+    // no cropping. (Cropping only applies to live camera capture, where it
+    // matches the on-screen focus frame.)
+    onCapture(file);
   }
 
   return (
@@ -257,44 +256,4 @@ function Overlay({ children }: { children: React.ReactNode }) {
       {children}
     </div>
   );
-}
-
-/**
- * Center-crop an image File to a square at `fraction` of its shorter side.
- * Returns a JPEG Blob (quality 0.85). On any failure resolves to null and
- * the caller falls back to the original file.
- */
-async function centerCropImage(file: File, fraction: number): Promise<Blob | null> {
-  return new Promise((resolve) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const w = img.naturalWidth;
-        const h = img.naturalHeight;
-        const cropSize = Math.round(Math.min(w, h) * fraction);
-        const sx = Math.round((w - cropSize) / 2);
-        const sy = Math.round((h - cropSize) / 2);
-        const canvas = document.createElement('canvas');
-        canvas.width = cropSize;
-        canvas.height = cropSize;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(null);
-          return;
-        }
-        ctx.drawImage(img, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
-        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.85);
-      } catch {
-        resolve(null);
-      } finally {
-        URL.revokeObjectURL(url);
-      }
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      resolve(null);
-    };
-    img.src = url;
-  });
 }
